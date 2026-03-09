@@ -10,120 +10,150 @@
   <link rel="stylesheet" href="./public/styles.css">
 </head>
 <body>
-  <div class="page-shell">
-    <section class="gate" id="gate">
-      <div class="gate-card">
-        <div class="gate-left">
-          <p id="gateBadge" class="badge">Community Access Required</p>
-          <h1 class="brand-lockup">
-            <span>The WOL</span>
-            <span>Collective</span>
-          </h1>
-          <p id="gateIntro" class="gate-copy">Built for Black voices, Black futures, and everyone committed to breaking old systems.</p>
-          <p id="gateQuote" class="quote">"Style as protest. Fabric as memory. Movement as design."</p>
-        </div>
-        <div class="gate-right">
-          <p class="eyebrow">Waitlist Access</p>
-          <h2 id="gateTitle">Unlock the first drop</h2>
-          <p id="gateBody" class="support">Enter your email for a 10% launch code and join the drop list before release.</p>
-          <form id="waitlistForm" class="stack" novalidate>
-            <label id="waitlistLabel" for="waitlistEmail">Email for 10% off at drop</label>
-            <input id="waitlistEmail" type="email" name="email" placeholder="you@example.com" autocomplete="email" required>
-            <button class="primary-button" type="submit">Submit Email</button>
-            <p id="waitlistNote" class="note">Drop code is sent when collection goes live.</p>
-            <p id="waitlistFallback" class="note secondary-note"></p>
-            <p id="waitlistMessage" class="message" aria-live="polite"></p>
-          </form>
-        </div>
-      </div>
+  <div id="statusBanner" class="status-banner" hidden></div>
 
-      <section class="owner-card">
-        <p id="ownerPrompt" class="owner-title">Are you the owner of The WOL Collective? Input password here.</p>
-        <form id="loginForm" class="owner-form" novalidate>
-          <div class="owner-field">
-            <label for="ownerPassword">Owner password</label>
-            <input id="ownerPassword" type="password" name="password" placeholder="Enter password" autocomplete="current-password" required>
-          </div>
-          <button class="primary-button owner-button" type="submit">Enter WOL Space</button>
-        </form>
-        <p id="loginMessage" class="message" aria-live="polite"></p>
-      </section>
+  <header class="topbar">
+    <div>
+      <p class="brand-kicker">The WOL Collective</p>
+      <p id="navTagline" class="nav-copy">By us. For us. Against what was built to erase us.</p>
+    </div>
+    <nav class="topbar-actions">
+      <a class="ghost-link" href="#product">Product</a>
+      <a class="ghost-link" href="#waitlist">Waitlist</a>
+      <button id="cartButton" class="cart-button" type="button">
+        Cart
+        <span id="cartCount" class="cart-count">0</span>
+      </button>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="hero-copy">
+        <p id="heroBadge" class="badge">Drop 001 Live</p>
+        <h1 class="hero-lockup">
+          <span id="heroLine0">Rewrite</span>
+          <span id="heroLine1" class="outlined">The</span>
+          <span id="heroLine2">System</span>
+        </h1>
+      </div>
+      <div class="hero-panel">
+        <h2 id="heroTitle">A one-product store built as a uniform for memory, resistance, and belonging.</h2>
+        <p id="heroText">The WOL Collective is an Afro-centred clothing project building garments around memory, resistance, and cultural authorship.</p>
+        <div id="heroChips" class="chip-row"></div>
+      </div>
     </section>
 
-    <div id="site" class="site-shell is-locked">
-      <header class="topbar">
-        <div>
-          <p class="brand-kicker">The WOL Collective</p>
-          <p id="navTagline" class="nav-copy">By us. For us. Against what was built to erase us.</p>
+    <section class="manifesto">
+      <p class="section-label">Manifesto</p>
+      <h2 id="manifestoHeading">Designed as witness. Built to be worn every day.</h2>
+      <p id="manifestoBody">WOL treats clothing as an archive of pressure, survival, softness, and refusal.</p>
+    </section>
+
+    <section id="product" class="product-section">
+      <div class="product-media">
+        <div id="productImage" class="product-image" role="img" aria-label="Featured WOL product"></div>
+      </div>
+      <article class="product-card">
+        <p class="section-label">Featured Product</p>
+        <h2 id="productName">Product 001: The System Breaker Overshirt</h2>
+        <p id="productDescription" class="product-description"></p>
+        <p id="productStory" class="product-story"></p>
+        <div class="product-meta">
+          <p id="productPrice" class="price"></p>
+          <p id="productSizes" class="sizes"></p>
         </div>
-        <div class="topbar-actions">
-          <button id="joinWaitlistButton" class="ghost-button" type="button">Join Waitlist</button>
-          <button id="lockButton" class="ghost-button" type="button">Lock Site</button>
-        </div>
-      </header>
-
-      <main>
-        <section class="hero">
-          <div class="hero-copy">
-            <p class="section-label">Drop 001</p>
-            <h1 class="hero-lockup">
-              <span id="heroLine0">Rewrite</span>
-              <span id="heroLine1" class="outlined">The</span>
-              <span id="heroLine2">System</span>
-            </h1>
-          </div>
-          <div class="hero-panel">
-            <h2 id="heroTitle">One product. One message. No silence.</h2>
-            <p id="heroText">The WOL Collective is an Afro-centred clothing project building garments around memory, resistance, and cultural authorship.</p>
-            <div id="heroChips" class="chip-row"></div>
-          </div>
-        </section>
-
-        <section class="manifesto">
-          <p class="section-label">Manifesto</p>
-          <h2 id="manifestoHeading">A uniform for memory, resistance, and belonging.</h2>
-          <p id="manifestoBody">WOL is designed around the idea that clothing can carry witness.</p>
-        </section>
-
-        <section class="product-section">
-          <div class="product-media">
-            <div id="productImage" class="product-image" role="img" aria-label="Featured WOL product"></div>
-          </div>
-          <article class="product-copy-panel">
-            <p class="section-label">Featured Product</p>
-            <h2 id="productName">Product 001: The System Breaker Overshirt</h2>
-            <p id="productDescription" class="product-description"></p>
-            <p id="productStory" class="product-story"></p>
-            <div class="product-meta">
-              <p id="productPrice" class="price"></p>
-              <p id="productSizes" class="sizes"></p>
+        <div class="purchase-block">
+          <div class="quantity-card">
+            <p class="quantity-label">Quantity</p>
+            <div class="quantity-controls">
+              <button id="decreaseQty" class="qty-button" type="button" aria-label="Decrease quantity">-</button>
+              <span id="selectedQty" class="qty-value">1</span>
+              <button id="increaseQty" class="qty-button" type="button" aria-label="Increase quantity">+</button>
             </div>
-          </article>
-        </section>
-
-        <section class="lookbook">
-          <div class="section-head">
-            <p class="section-label">Campaign Frames</p>
-            <h2>Presence in three studies.</h2>
           </div>
-          <div id="lookbookGrid" class="lookbook-grid"></div>
-        </section>
-
-        <section class="concept-section">
-          <div class="section-head">
-            <p class="section-label">Future Capsules</p>
-            <h2>Concepts that treat fabric as archive.</h2>
+          <div class="action-row">
+            <button id="addToCartButton" class="primary-button" type="button">Add To Cart</button>
+            <button id="buyNowButton" class="secondary-button" type="button">Buy Now</button>
           </div>
-          <div id="conceptGrid" class="concept-grid"></div>
-        </section>
-      </main>
+          <p id="checkoutMessage" class="inline-message" aria-live="polite"></p>
+        </div>
+      </article>
+    </section>
 
-      <footer class="site-footer">
-        <span id="footerLeft">The WOL Collective</span>
-        <span id="footerRight">Access is intentional. Culture is non-negotiable.</span>
-      </footer>
+    <section class="lookbook">
+      <div class="section-head">
+        <p class="section-label">Campaign Frames</p>
+        <h2>Presence in three studies.</h2>
+      </div>
+      <div id="lookbookGrid" class="lookbook-grid"></div>
+    </section>
+
+    <section class="concept-section">
+      <div class="section-head">
+        <p class="section-label">Future Capsules</p>
+        <h2>Concepts that treat fabric as archive.</h2>
+      </div>
+      <div id="conceptGrid" class="concept-grid"></div>
+    </section>
+
+    <section id="waitlist" class="waitlist-section">
+      <div class="waitlist-card">
+        <div>
+          <p class="section-label">Waitlist</p>
+          <h2 id="waitlistTitle">Stay close to the next drop.</h2>
+          <p id="waitlistBody">Leave your email for launch updates, restocks, and the next WOL release.</p>
+        </div>
+        <form id="waitlistForm" class="waitlist-form" novalidate>
+          <label for="waitlistEmail">Email address</label>
+          <div class="waitlist-row">
+            <input id="waitlistEmail" type="email" name="email" placeholder="you@example.com" autocomplete="email" required>
+            <button id="waitlistButton" class="primary-button" type="submit">Join Waitlist</button>
+          </div>
+          <p id="waitlistNote" class="waitlist-note"></p>
+          <p id="waitlistMessage" class="inline-message" aria-live="polite"></p>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <aside id="cartDrawer" class="cart-drawer" aria-hidden="true">
+    <div class="cart-header">
+      <div>
+        <p class="section-label">Cart</p>
+        <h2>Your order</h2>
+      </div>
+      <button id="closeCartButton" class="icon-button" type="button" aria-label="Close cart">x</button>
     </div>
-  </div>
+    <div id="cartEmpty" class="cart-empty">
+      <p>Your cart is empty.</p>
+      <p>Add the overshirt to begin checkout.</p>
+    </div>
+    <div id="cartContent" class="cart-content" hidden>
+      <article class="cart-line">
+        <div>
+          <p id="cartProductName" class="cart-product-name"></p>
+          <p id="cartProductMeta" class="cart-product-meta"></p>
+        </div>
+        <p id="cartLineTotal" class="cart-line-total"></p>
+      </article>
+      <div class="cart-quantity-row">
+        <span class="cart-qty-label">Quantity</span>
+        <div class="quantity-controls compact">
+          <button id="cartDecreaseQty" class="qty-button" type="button" aria-label="Decrease cart quantity">-</button>
+          <span id="cartQty" class="qty-value">0</span>
+          <button id="cartIncreaseQty" class="qty-button" type="button" aria-label="Increase cart quantity">+</button>
+        </div>
+      </div>
+      <div class="cart-summary-row">
+        <span>Subtotal</span>
+        <strong id="cartSubtotal"></strong>
+      </div>
+      <button id="checkoutButton" class="primary-button full-width" type="button">Checkout With Stripe</button>
+      <p class="cart-note">Secure checkout opens in a hosted Stripe page.</p>
+    </div>
+  </aside>
+  <div id="cartOverlay" class="cart-overlay" hidden></div>
 
   <script src="./public/app.js" defer></script>
 </body>

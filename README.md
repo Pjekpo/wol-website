@@ -1,31 +1,41 @@
 ﻿# The WOL Collective
 
-This repo is now set up as a static site for Vercel.
+This repo is now a Vercel-ready storefront with a client-side cart and a serverless Stripe Checkout session endpoint.
 
-## Vercel deployment settings
+## Stack
+
+- Static storefront at `index.html`
+- Cart state in `localStorage`
+- Vercel Function at `api/create-checkout-session.mjs`
+- Stripe Checkout for hosted payment flow
+
+## Required Vercel environment variables
+
+Add these in the Vercel project settings:
+
+- `STRIPE_SECRET_KEY`
+- `STRIPE_PRICE_ID`
+
+`STRIPE_PRICE_ID` should be the Stripe Price ID for the product you want to sell.
+
+## How checkout works
+
+1. Customer adds the product to cart.
+2. Client posts quantity to `/api/create-checkout-session`.
+3. The Vercel function creates a Stripe Checkout Session using your secret key and price ID.
+4. Customer is redirected to Stripe.
+
+## Vercel project settings
 
 Use these settings in the Vercel project:
 
 - Framework Preset: `Other`
 - Build Command: leave blank
-- Output Directory: leave blank in the dashboard, or use the repo `vercel.json` override
 - Install Command: leave blank
+- Output Directory: leave blank
 
-A `vercel.json` file is included to force the Output Directory to the repo root so Vercel serves `index.html`.
+## Important notes
 
-## Why the Vercel 404 happened
-
-Vercel shows `404: NOT_FOUND` when the deployment does not include a root index file at the path it is serving from. In this repo the site lives at the repo root, while the `public/` folder only contains assets. If Vercel was trying to serve `public/` as the output directory, `/` would 404.
-
-## Custom domain on Vercel
-
-After the deployment works:
-
-1. Open the Vercel project.
-2. Go to `Settings` -> `Domains`.
-3. Add `thewolcollective.com` and `www.thewolcollective.com`.
-4. In Namecheap, use the DNS records Vercel gives you for that project.
-
-## Important limitation
-
-This is a static site. The password gate is browser-side only, and the waitlist is local-only unless you connect a real form endpoint in `data/content.json`.
+- This is now dynamic because checkout is created server-side through Vercel Functions.
+- The waitlist form is still browser-only unless you connect a real endpoint in `data/content.json`.
+- If the site still shows a Vercel 404, check that the Vercel project Root Directory is the repo root and not `public`.

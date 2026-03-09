@@ -2,32 +2,25 @@
   "brand": {
     "name": "The WOL Collective",
     "navTagline": "By us. For us. Against what was built to erase us.",
-    "badge": "Community Access Required",
+    "badge": "Drop 001 Live",
     "quote": "\"Style as protest. Fabric as memory. Movement as design.\""
-  },
-  "gate": {
-    "title": "Unlock the first drop",
-    "intro": "Built for Black voices, Black futures, and everyone committed to breaking old systems.",
-    "body": "Enter your email for a 10% launch code and join the drop list before release.",
-    "ownerPrompt": "Are you the owner of The WOL Collective? Input password here.",
-    "waitlistLabel": "Email for 10% off at drop",
-    "waitlistNote": "Drop code is sent when collection goes live.",
-    "waitlistFallback": "This GitHub Pages version stores signups in this browser only until you connect a real form endpoint.",
-    "waitlistEndpoint": ""
   },
   "hero": {
     "headline": ["Rewrite", "The", "System"],
-    "title": "One product. One message. No silence.",
-    "text": "The WOL Collective is an Afro-centred clothing project building garments around memory, resistance, and cultural authorship. The first drop stays intentionally focused: one statement piece, one clear voice.",
-    "chips": ["Drop 001", "GitHub Pages Edition", "Afro-Centred Design"]
+    "title": "A one-product store built as a uniform for memory, resistance, and belonging.",
+    "text": "The WOL Collective is an Afro-centred clothing project building garments around memory, resistance, and cultural authorship. This first release stays singular: one statement piece, one clear voice, one disciplined silhouette.",
+    "chips": ["Drop 001", "Limited Quantity", "Stripe Checkout Ready"]
   },
   "manifesto": {
-    "heading": "A uniform for memory, resistance, and belonging.",
-    "body": "WOL is designed around the idea that clothing can carry witness. Every line, every seam, every silhouette is treated as a record of pressure, survival, and presence."
+    "heading": "Designed as witness. Built to be worn every day.",
+    "body": "WOL treats clothing as an archive of pressure, survival, softness, and refusal. The first release is intentionally focused so the product carries the full weight of the message instead of being buried inside a catalogue."
   },
   "product": {
+    "slug": "system-breaker-overshirt",
     "name": "Product 001: The System Breaker Overshirt",
-    "price": "GBP 120.00",
+    "price": 120,
+    "currency": "GBP",
+    "priceLabel": "GBP 120.00",
     "sizes": "XS / S / M / L / XL",
     "description": "A heavyweight black overshirt cut with calm structure, contrast seam mapping, and a clean silhouette intended to feel ceremonial without losing street function.",
     "story": "Built as a single-anchor release, the overshirt is meant to be worn as an everyday uniform. It balances restraint and defiance: soft drape, firm shoulders, and a message carried through proportion rather than noise.",
@@ -64,8 +57,15 @@
       "body": "Each hem carries stitched date markers referencing moments of refusal, assembly, and collective care."
     }
   ],
+  "waitlist": {
+    "title": "Stay close to the next drop.",
+    "body": "Leave your email for launch updates, restocks, and the next WOL release.",
+    "button": "Join Waitlist",
+    "note": "If you want real collection, connect a form endpoint in the app config.",
+    "endpoint": ""
+  },
   "footer": {
     "left": "The WOL Collective",
-    "right": "Access is intentional. Culture is non-negotiable."
+    "right": "Culture is non-negotiable."
   }
 }
