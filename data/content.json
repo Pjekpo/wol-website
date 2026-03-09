@@ -1,4 +1,4 @@
-{
+﻿{
   "brand": {
     "name": "The WOL Collective",
     "navTagline": "By us. For us. Against what was built to erase us.",
@@ -11,13 +11,15 @@
     "body": "Enter your email for a 10% launch code and join the drop list before release.",
     "ownerPrompt": "Are you the owner of The WOL Collective? Input password here.",
     "waitlistLabel": "Email for 10% off at drop",
-    "waitlistNote": "Drop code is sent when collection goes live."
+    "waitlistNote": "Drop code is sent when collection goes live.",
+    "waitlistFallback": "This GitHub Pages version stores signups in this browser only until you connect a real form endpoint.",
+    "waitlistEndpoint": ""
   },
   "hero": {
     "headline": ["Rewrite", "The", "System"],
     "title": "One product. One message. No silence.",
     "text": "The WOL Collective is an Afro-centred clothing project building garments around memory, resistance, and cultural authorship. The first drop stays intentionally focused: one statement piece, one clear voice.",
-    "chips": ["Drop 001", "Owner Access Only", "Afro-Centred Design"]
+    "chips": ["Drop 001", "GitHub Pages Edition", "Afro-Centred Design"]
   },
   "manifesto": {
     "heading": "A uniform for memory, resistance, and belonging.",

@@ -1,0 +1,130 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The WOL Collective</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;700;900&family=Bebas+Neue&family=Cormorant+Garamond:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./public/styles.css">
+</head>
+<body>
+  <div class="page-shell">
+    <section class="gate" id="gate">
+      <div class="gate-card">
+        <div class="gate-left">
+          <p id="gateBadge" class="badge">Community Access Required</p>
+          <h1 class="brand-lockup">
+            <span>The WOL</span>
+            <span>Collective</span>
+          </h1>
+          <p id="gateIntro" class="gate-copy">Built for Black voices, Black futures, and everyone committed to breaking old systems.</p>
+          <p id="gateQuote" class="quote">"Style as protest. Fabric as memory. Movement as design."</p>
+        </div>
+        <div class="gate-right">
+          <p class="eyebrow">Waitlist Access</p>
+          <h2 id="gateTitle">Unlock the first drop</h2>
+          <p id="gateBody" class="support">Enter your email for a 10% launch code and join the drop list before release.</p>
+          <form id="waitlistForm" class="stack" novalidate>
+            <label id="waitlistLabel" for="waitlistEmail">Email for 10% off at drop</label>
+            <input id="waitlistEmail" type="email" name="email" placeholder="you@example.com" autocomplete="email" required>
+            <button class="primary-button" type="submit">Submit Email</button>
+            <p id="waitlistNote" class="note">Drop code is sent when collection goes live.</p>
+            <p id="waitlistFallback" class="note secondary-note"></p>
+            <p id="waitlistMessage" class="message" aria-live="polite"></p>
+          </form>
+        </div>
+      </div>
+
+      <section class="owner-card">
+        <p id="ownerPrompt" class="owner-title">Are you the owner of The WOL Collective? Input password here.</p>
+        <form id="loginForm" class="owner-form" novalidate>
+          <div class="owner-field">
+            <label for="ownerPassword">Owner password</label>
+            <input id="ownerPassword" type="password" name="password" placeholder="Enter password" autocomplete="current-password" required>
+          </div>
+          <button class="primary-button owner-button" type="submit">Enter WOL Space</button>
+        </form>
+        <p id="loginMessage" class="message" aria-live="polite"></p>
+      </section>
+    </section>
+
+    <div id="site" class="site-shell is-locked">
+      <header class="topbar">
+        <div>
+          <p class="brand-kicker">The WOL Collective</p>
+          <p id="navTagline" class="nav-copy">By us. For us. Against what was built to erase us.</p>
+        </div>
+        <div class="topbar-actions">
+          <button id="joinWaitlistButton" class="ghost-button" type="button">Join Waitlist</button>
+          <button id="lockButton" class="ghost-button" type="button">Lock Site</button>
+        </div>
+      </header>
+
+      <main>
+        <section class="hero">
+          <div class="hero-copy">
+            <p class="section-label">Drop 001</p>
+            <h1 class="hero-lockup">
+              <span id="heroLine0">Rewrite</span>
+              <span id="heroLine1" class="outlined">The</span>
+              <span id="heroLine2">System</span>
+            </h1>
+          </div>
+          <div class="hero-panel">
+            <h2 id="heroTitle">One product. One message. No silence.</h2>
+            <p id="heroText">The WOL Collective is an Afro-centred clothing project building garments around memory, resistance, and cultural authorship.</p>
+            <div id="heroChips" class="chip-row"></div>
+          </div>
+        </section>
+
+        <section class="manifesto">
+          <p class="section-label">Manifesto</p>
+          <h2 id="manifestoHeading">A uniform for memory, resistance, and belonging.</h2>
+          <p id="manifestoBody">WOL is designed around the idea that clothing can carry witness.</p>
+        </section>
+
+        <section class="product-section">
+          <div class="product-media">
+            <div id="productImage" class="product-image" role="img" aria-label="Featured WOL product"></div>
+          </div>
+          <article class="product-copy-panel">
+            <p class="section-label">Featured Product</p>
+            <h2 id="productName">Product 001: The System Breaker Overshirt</h2>
+            <p id="productDescription" class="product-description"></p>
+            <p id="productStory" class="product-story"></p>
+            <div class="product-meta">
+              <p id="productPrice" class="price"></p>
+              <p id="productSizes" class="sizes"></p>
+            </div>
+          </article>
+        </section>
+
+        <section class="lookbook">
+          <div class="section-head">
+            <p class="section-label">Campaign Frames</p>
+            <h2>Presence in three studies.</h2>
+          </div>
+          <div id="lookbookGrid" class="lookbook-grid"></div>
+        </section>
+
+        <section class="concept-section">
+          <div class="section-head">
+            <p class="section-label">Future Capsules</p>
+            <h2>Concepts that treat fabric as archive.</h2>
+          </div>
+          <div id="conceptGrid" class="concept-grid"></div>
+        </section>
+      </main>
+
+      <footer class="site-footer">
+        <span id="footerLeft">The WOL Collective</span>
+        <span id="footerRight">Access is intentional. Culture is non-negotiable.</span>
+      </footer>
+    </div>
+  </div>
+
+  <script src="./public/app.js" defer></script>
+</body>
+</html>
