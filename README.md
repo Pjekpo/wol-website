@@ -1,45 +1,31 @@
 ﻿# The WOL Collective
 
-This repo is now set up for GitHub Pages.
+This repo is now set up as a static site for Vercel.
 
-## What changed
+## Vercel deployment settings
 
-- The old Node backend was removed because GitHub Pages only serves static files.
-- The site now runs from `index.html` and loads content from `data/content.json`.
-- The owner password gate is client-side only.
-- Waitlist signup is also client-side by default and stores emails in the visitor browser unless you connect a real form endpoint.
+Use these settings in the Vercel project:
 
-## Real waitlist collection on GitHub Pages
+- Framework Preset: `Other`
+- Build Command: leave blank
+- Output Directory: leave blank in the dashboard, or use the repo `vercel.json` override
+- Install Command: leave blank
 
-If you want real email capture on a static host, connect a form service like Formspree or Formsubmit.
-Then set `gate.waitlistEndpoint` in `data/content.json` to that endpoint URL.
+A `vercel.json` file is included to force the Output Directory to the repo root so Vercel serves `index.html`.
 
-## GitHub Pages setup
+## Why the Vercel 404 happened
 
-1. Push this repo to GitHub.
-2. In GitHub, open the repo `Settings` -> `Pages`.
-3. Under `Build and deployment`, set `Source` to `Deploy from a branch`.
-4. Select branch `main` and folder `/ (root)`.
-5. Save.
-6. GitHub will publish `index.html` from the repo root.
+Vercel shows `404: NOT_FOUND` when the deployment does not include a root index file at the path it is serving from. In this repo the site lives at the repo root, while the `public/` folder only contains assets. If Vercel was trying to serve `public/` as the output directory, `/` would 404.
 
-## Custom domain
+## Custom domain on Vercel
 
-This repo includes a `CNAME` file for `thewolcollective.com`.
-After GitHub Pages is live, set the custom domain in GitHub Pages settings and then point Namecheap DNS to GitHub Pages.
+After the deployment works:
 
-## Namecheap DNS for apex + www
-
-Use these records for GitHub Pages:
-
-- `A` Host `@` -> `185.199.108.153`
-- `A` Host `@` -> `185.199.109.153`
-- `A` Host `@` -> `185.199.110.153`
-- `A` Host `@` -> `185.199.111.153`
-- `CNAME` Host `www` -> `pjekpo.github.io`
-
-Remove conflicting old `A`, `CNAME`, `URL Redirect`, or `AAAA` records first.
+1. Open the Vercel project.
+2. Go to `Settings` -> `Domains`.
+3. Add `thewolcollective.com` and `www.thewolcollective.com`.
+4. In Namecheap, use the DNS records Vercel gives you for that project.
 
 ## Important limitation
 
-Because this is GitHub Pages, the password gate is not secure server-side protection. It only hides the site in the browser.
+This is a static site. The password gate is browser-side only, and the waitlist is local-only unless you connect a real form endpoint in `data/content.json`.
