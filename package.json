@@ -1,0 +1,9 @@
+{
+  "name": "the-wol-collective",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Frontend and backend website for The WOL Collective.",
+  "scripts": {
+    "start": "node server.js"
+  }
+}
