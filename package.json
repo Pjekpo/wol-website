@@ -1,0 +1,11 @@
+{
+  "name": "wol-website",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": "20.x"
+  },
+  "scripts": {
+    "build": "node -e \"console.log('No build step required for Vercel')\""
+  }
+}
