@@ -22,6 +22,7 @@
     "currency": "GBP",
     "priceLabel": "GBP 120.00",
     "sizes": "XS / S / M / L / XL",
+    "sizeOptions": ["XS", "S", "M", "L", "XL"],
     "description": "A heavyweight black overshirt cut with calm structure, contrast seam mapping, and a clean silhouette intended to feel ceremonial without losing street function.",
     "story": "Built as a single-anchor release, the overshirt is meant to be worn as an everyday uniform. It balances restraint and defiance: soft drape, firm shoulders, and a message carried through proportion rather than noise.",
     "image": "https://images.pexels.com/photos/20418504/pexels-photo-20418504.jpeg?auto=compress&cs=tinysrgb&w=1400"
@@ -61,7 +62,7 @@
     "title": "Stay close to the next drop.",
     "body": "Leave your email for launch updates, restocks, and the next WOL release.",
     "button": "Join Waitlist",
-    "note": "If you want real collection, connect a form endpoint in the app config.",
+    "note": "Connect a real form endpoint later if you want collected emails to persist outside the browser.",
     "endpoint": ""
   },
   "footer": {

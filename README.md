@@ -1,41 +1,27 @@
-﻿# The WOL Collective
+# The WOL Collective
 
-This repo is now a Vercel-ready storefront with a client-side cart and a serverless Stripe Checkout session endpoint.
+This repo is now structured as a Next.js storefront for Vercel.
 
-## Stack
+## What was missing
 
-- Static storefront at `index.html`
-- Cart state in `localStorage`
-- Vercel Function at `api/create-checkout-session.mjs`
-- Stripe Checkout for hosted payment flow
+Your working Vercel project uses a real framework app structure (`app/`, `package.json`, build scripts, and route handlers).
+This repo did not. That mismatch is what kept causing deployment confusion.
 
 ## Required Vercel environment variables
 
-Add these in the Vercel project settings:
+Add these to the Vercel project before testing checkout:
 
 - `STRIPE_SECRET_KEY`
 - `STRIPE_PRICE_ID`
 
-`STRIPE_PRICE_ID` should be the Stripe Price ID for the product you want to sell.
+## Vercel settings
 
-## How checkout works
+- Framework Preset: `Next.js`
+- Root Directory: repo root
+- Build Command: leave default
+- Output Directory: leave default
+- Node.js Version: remove any old override or set it to `20.x`
 
-1. Customer adds the product to cart.
-2. Client posts quantity to `/api/create-checkout-session`.
-3. The Vercel function creates a Stripe Checkout Session using your secret key and price ID.
-4. Customer is redirected to Stripe.
+## Checkout flow
 
-## Vercel project settings
-
-Use these settings in the Vercel project:
-
-- Framework Preset: `Other`
-- Build Command: leave blank
-- Install Command: leave blank
-- Output Directory: leave blank
-
-## Important notes
-
-- This is now dynamic because checkout is created server-side through Vercel Functions.
-- The waitlist form is still browser-only unless you connect a real endpoint in `data/content.json`.
-- If the site still shows a Vercel 404, check that the Vercel project Root Directory is the repo root and not `public`.
+The site uses a browser cart and a Next.js route at `app/api/create-checkout-session/route.js` to create the Stripe Checkout session securely on the server.
