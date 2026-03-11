@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 
 const CART_KEY = "wol_collective_cart";
 const WAITLIST_KEY = "wol_collective_waitlist";
+const OWNER_PIN = "1234";
 
 function formatMoney(value, currency) {
   return new Intl.NumberFormat("en-GB", {
@@ -35,6 +36,11 @@ export default function Storefront({ content }) {
   const [waitlistMessage, setWaitlistMessage] = useState("");
   const [waitlistState, setWaitlistState] = useState("");
   const [statusBanner, setStatusBanner] = useState({ text: "", state: "" });
+  const [entryUnlocked, setEntryUnlocked] = useState(false);
+  const [ownerAccessOpen, setOwnerAccessOpen] = useState(false);
+  const [ownerPin, setOwnerPin] = useState("");
+  const [ownerPinMessage, setOwnerPinMessage] = useState("");
+  const [entryMediaAvailable, setEntryMediaAvailable] = useState(true);
 
   useEffect(() => {
     try {
@@ -208,6 +214,74 @@ export default function Storefront({ content }) {
     event.currentTarget.reset();
   }
 
+  function handleOwnerAccessSubmit(event) {
+    event.preventDefault();
+
+    if (ownerPin.trim() === OWNER_PIN) {
+      setEntryUnlocked(true);
+      setOwnerPin("");
+      setOwnerPinMessage("");
+      return;
+    }
+
+    setOwnerPinMessage("You arent the owner broski, move along");
+  }
+
+  if (!entryUnlocked) {
+    return (
+      <section className="entry-screen">
+        <div className="entry-media-shell">
+          {entryMediaAvailable ? (
+            <picture className="entry-picture">
+              <source media="(min-width: 1180px) and (hover: hover) and (pointer: fine)" srcSet="/Landing%20page.png" />
+              <img
+                className="entry-media"
+                src="/LandingPagePhone.png"
+                alt={content.entry.alt}
+                onError={() => setEntryMediaAvailable(false)}
+              />
+            </picture>
+          ) : (
+            <div className="entry-media entry-media-fallback">
+              <p>Add your GIF at <code>public/owner-entry.gif</code>.</p>
+            </div>
+          )}
+        </div>
+
+        <div className="entry-owner">
+          {!ownerAccessOpen ? (
+            <button className="owner-access-trigger" type="button" onClick={() => setOwnerAccessOpen(true)}>
+              {content.entry.ownerLabel}
+            </button>
+          ) : (
+            <form className="owner-access-form" onSubmit={handleOwnerAccessSubmit}>
+              <label className="owner-access-label" htmlFor="ownerPinInput">{content.entry.ownerLabel}</label>
+              <div className="owner-access-row">
+                <input
+                  id="ownerPinInput"
+                  className="owner-pin-input"
+                  type="password"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  maxLength={4}
+                  value={ownerPin}
+                  onChange={(event) => {
+                    setOwnerPin(event.target.value.replace(/\D/g, "").slice(0, 4));
+                    setOwnerPinMessage("");
+                  }}
+                  placeholder="PIN"
+                  autoComplete="off"
+                />
+                <button className="owner-access-submit" type="submit">Enter</button>
+              </div>
+              <p className={`owner-access-message ${ownerPinMessage ? "visible" : ""}`}>{ownerPinMessage || " "}</p>
+            </form>
+          )}
+        </div>
+      </section>
+    );
+  }
+
   return (
     <>
       {statusBanner.text ? <div className={`status-banner ${statusBanner.state}`}>{statusBanner.text}</div> : null}
@@ -309,21 +383,6 @@ export default function Storefront({ content }) {
                   <p className="section-label">{item.label}</p>
                   <h3>{item.title}</h3>
                 </div>
-              </article>
-            ))}
-          </div>
-        </section>
-
-        <section className="concept-section">
-          <div className="section-head">
-            <p className="section-label">Future Capsules</p>
-            <h2>Concepts that treat fabric as archive.</h2>
-          </div>
-          <div className="concept-grid">
-            {content.concepts.map((concept) => (
-              <article className="concept-card" key={concept.title}>
-                <h3>{concept.title}</h3>
-                <p>{concept.body}</p>
               </article>
             ))}
           </div>

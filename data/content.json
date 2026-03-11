@@ -5,6 +5,11 @@
     "badge": "Drop 001 Live",
     "quote": "\"Style as protest. Fabric as memory. Movement as design.\""
   },
+  "entry": {
+    "image": "/owner-entry.gif",
+    "alt": "Animated WOL landing image",
+    "ownerLabel": "Owner access"
+  },
   "hero": {
     "headline": ["Rewrite", "The", "System"],
     "title": "A one-product store built as a uniform for memory, resistance, and belonging.",
@@ -42,20 +47,6 @@
       "label": "Campaign 03",
       "title": "Presence as language.",
       "image": "https://images.pexels.com/photos/7691234/pexels-photo-7691234.jpeg?auto=compress&cs=tinysrgb&w=900"
-    }
-  ],
-  "concepts": [
-    {
-      "title": "Courtline Quilting",
-      "body": "Stitch paths echo the legal routes communities are forced to navigate, with hidden interior map lines appearing only at close range."
-    },
-    {
-      "title": "Noiseprint Denim",
-      "body": "Fabric surface patterns derived from chant rhythm and public gathering audio, converted into raised tonal textures."
-    },
-    {
-      "title": "Archive Hem",
-      "body": "Each hem carries stitched date markers referencing moments of refusal, assembly, and collective care."
     }
   ],
   "waitlist": {

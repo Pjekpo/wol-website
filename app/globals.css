@@ -36,6 +36,10 @@ a {
   text-decoration: none;
 }
 
+code {
+  font-family: "Courier New", Courier, monospace;
+}
+
 button,
 input,
 select {
@@ -44,6 +48,132 @@ select {
 
 button {
   cursor: pointer;
+}
+
+.entry-screen {
+  min-height: 100vh;
+  display: grid;
+  grid-template-rows: 1fr auto;
+  gap: 18px;
+  padding: clamp(18px, 3vw, 28px);
+  background:
+    radial-gradient(circle at top, rgba(220, 204, 182, 0.18), transparent 30%),
+    linear-gradient(180deg, #111 0%, #1f1914 100%);
+}
+
+.entry-media-shell {
+  display: grid;
+  place-items: center;
+}
+
+.entry-picture {
+  display: block;
+}
+
+.entry-media {
+  width: min(100%, 420px);
+  max-height: calc(100vh - 120px);
+  object-fit: contain;
+  border-radius: 20px;
+  box-shadow: 0 24px 90px rgba(0, 0, 0, 0.42);
+}
+
+.entry-media-fallback {
+  display: grid;
+  place-items: center;
+  padding: 28px;
+  color: rgba(247, 242, 232, 0.82);
+  text-align: center;
+  border: 1px solid rgba(247, 242, 232, 0.14);
+  background:
+    linear-gradient(180deg, rgba(247, 242, 232, 0.06), rgba(247, 242, 232, 0.02)),
+    rgba(0, 0, 0, 0.24);
+}
+
+.entry-media-fallback p {
+  margin: 0;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 0.82rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.entry-owner {
+  display: flex;
+  justify-content: center;
+  padding-bottom: 8px;
+}
+
+.owner-access-trigger,
+.owner-access-submit {
+  border: 0;
+  background: none;
+  color: rgba(247, 242, 232, 0.74);
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 0.65rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.owner-access-trigger {
+  padding: 0;
+}
+
+.owner-access-form {
+  display: grid;
+  gap: 8px;
+  justify-items: center;
+}
+
+.owner-access-label {
+  color: rgba(247, 242, 232, 0.58);
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 0.62rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.owner-access-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.owner-pin-input {
+  width: 74px;
+  min-height: 28px;
+  padding: 0 10px;
+  border: 1px solid rgba(247, 242, 232, 0.18);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--paper);
+  text-align: center;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 0.75rem;
+  letter-spacing: 0.18em;
+}
+
+.owner-pin-input::placeholder {
+  color: rgba(247, 242, 232, 0.34);
+}
+
+.owner-access-submit {
+  padding: 0;
+}
+
+.owner-access-message {
+  min-height: 12px;
+  margin: 0;
+  color: rgba(215, 105, 85, 0.92);
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 0.56rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  opacity: 0;
+}
+
+.owner-access-message.visible {
+  opacity: 1;
 }
 
 .status-banner {
@@ -177,7 +307,6 @@ main {
 .manifesto,
 .product-section,
 .lookbook,
-.concept-section,
 .waitlist-section {
   margin-bottom: 28px;
 }
@@ -186,7 +315,6 @@ main {
 .manifesto,
 .product-section,
 .lookbook,
-.concept-section,
 .waitlist-card,
 .product-card,
 .cart-drawer {
@@ -208,7 +336,6 @@ main {
 .manifesto,
 .product-card,
 .lookbook,
-.concept-section,
 .waitlist-card {
   position: relative;
   overflow: hidden;
@@ -271,7 +398,6 @@ main {
 .product-description,
 .product-story,
 .lookbook-copy h3,
-.concept-card p,
 .waitlist-card p,
 .cart-empty p,
 .cart-product-meta {
@@ -502,8 +628,7 @@ main {
   color: var(--error);
 }
 
-.lookbook,
-.concept-section {
+.lookbook {
   padding: 28px;
   border-radius: 32px;
 }
@@ -517,8 +642,7 @@ main {
   max-width: 540px;
 }
 
-.lookbook-grid,
-.concept-grid {
+.lookbook-grid {
   display: grid;
   gap: 18px;
 }
@@ -527,8 +651,7 @@ main {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
-.lookbook-card,
-.concept-card {
+.lookbook-card {
   border-radius: 26px;
   overflow: hidden;
   border: 1px solid var(--line);
@@ -550,21 +673,12 @@ main {
   padding: 20px;
 }
 
-.lookbook-copy h3,
-.concept-card h3 {
+.lookbook-copy h3 {
   margin: 12px 0 0;
   color: var(--ink);
   font-size: 1.4rem;
   line-height: 1.1;
   text-transform: uppercase;
-}
-
-.concept-grid {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-
-.concept-card {
-  padding: 24px;
 }
 
 .waitlist-card {
@@ -684,12 +798,67 @@ main {
   margin-top: 20px;
 }
 
+@media (min-width: 1180px) and (hover: hover) and (pointer: fine) {
+  .entry-screen {
+    position: relative;
+    grid-template-rows: 1fr;
+    gap: 0;
+    padding: 0;
+    overflow: hidden;
+    background: #020202;
+  }
+
+  .entry-media-shell {
+    min-height: 100vh;
+  }
+
+  .entry-media-shell::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(circle at center, transparent 0 34%, rgba(0, 0, 0, 0.18) 52%, rgba(0, 0, 0, 0.62) 100%),
+      linear-gradient(180deg, rgba(0, 0, 0, 0.42) 0%, transparent 22%, transparent 72%, rgba(0, 0, 0, 0.64) 100%);
+    pointer-events: none;
+  }
+
+  .entry-picture {
+    width: 100%;
+    height: 100%;
+  }
+
+  .entry-media {
+    width: 100%;
+    height: 100vh;
+    max-height: none;
+    object-fit: cover;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .entry-owner {
+    position: absolute;
+    left: 50%;
+    bottom: 24px;
+    z-index: 1;
+    transform: translateX(-50%);
+    padding: 12px 18px;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    backdrop-filter: none;
+  }
+
+  .owner-access-form {
+    min-width: 236px;
+  }
+}
+
 @media (max-width: 1100px) {
   .hero,
   .product-section,
   .waitlist-card,
-  .lookbook-grid,
-  .concept-grid {
+  .lookbook-grid {
     grid-template-columns: 1fr;
   }
 
@@ -724,7 +893,6 @@ main {
   .manifesto,
   .product-section,
   .lookbook,
-  .concept-section,
   .waitlist-card,
   .product-card,
   .cart-drawer {
@@ -735,8 +903,7 @@ main {
   .purchase-block,
   .quantity-card,
   .size-card,
-  .lookbook-card,
-  .concept-card {
+  .lookbook-card {
     border-radius: 20px;
   }
 
