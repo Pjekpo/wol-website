@@ -2,12 +2,7 @@
 
 export const metadata = {
   title: "The WOL Collective",
-  description: "Afro-centred clothing brand storefront with Stripe checkout.",
-  icons: {
-    icon: "/favicon.ico",
-    shortcut: "/favicon.ico",
-    apple: "/favicon.ico"
-  }
+  description: "Afro-centred clothing brand storefront with Stripe checkout."
 };
 
 export default function RootLayout({ children }) {
