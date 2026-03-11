@@ -51,31 +51,35 @@ button {
 }
 
 .entry-screen {
+  position: relative;
   min-height: 100vh;
   display: grid;
-  grid-template-rows: 1fr auto;
-  gap: 18px;
-  padding: clamp(18px, 3vw, 28px);
-  background:
-    radial-gradient(circle at top, rgba(220, 204, 182, 0.18), transparent 30%),
-    linear-gradient(180deg, #111 0%, #1f1914 100%);
+  grid-template-rows: 1fr;
+  gap: 0;
+  padding: 0;
+  overflow: hidden;
+  background: #020202;
 }
 
 .entry-media-shell {
-  display: grid;
-  place-items: center;
+  min-height: 100vh;
 }
 
 .entry-picture {
   display: block;
+  width: 100%;
+  height: 100%;
 }
 
 .entry-media {
-  width: min(100%, 420px);
-  max-height: calc(100vh - 120px);
-  object-fit: contain;
-  border-radius: 20px;
-  box-shadow: 0 24px 90px rgba(0, 0, 0, 0.42);
+  display: block;
+  width: 100%;
+  height: 100vh;
+  max-height: none;
+  object-fit: cover;
+  object-position: center;
+  border-radius: 0;
+  box-shadow: none;
 }
 
 .entry-media-fallback {
@@ -99,9 +103,16 @@ button {
 }
 
 .entry-owner {
+  position: absolute;
+  left: 50%;
+  bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+  z-index: 1;
   display: flex;
   justify-content: center;
-  padding-bottom: 8px;
+  width: max-content;
+  max-width: calc(100% - 32px);
+  transform: translateX(-50%);
+  padding-bottom: 0;
 }
 
 .owner-access-trigger,
@@ -174,6 +185,17 @@ button {
 
 .owner-access-message.visible {
   opacity: 1;
+}
+
+@supports (min-height: 100dvh) {
+  .entry-screen,
+  .entry-media-shell {
+    min-height: 100dvh;
+  }
+
+  .entry-media {
+    height: 100dvh;
+  }
 }
 
 .status-banner {
@@ -799,19 +821,6 @@ main {
 }
 
 @media (min-width: 1180px) and (hover: hover) and (pointer: fine) {
-  .entry-screen {
-    position: relative;
-    grid-template-rows: 1fr;
-    gap: 0;
-    padding: 0;
-    overflow: hidden;
-    background: #020202;
-  }
-
-  .entry-media-shell {
-    min-height: 100vh;
-  }
-
   .entry-media-shell::after {
     content: "";
     position: absolute;
@@ -822,31 +831,8 @@ main {
     pointer-events: none;
   }
 
-  .entry-picture {
-    width: 100%;
-    height: 100%;
-  }
-
-  .entry-media {
-    width: 100%;
-    height: 100vh;
-    max-height: none;
-    object-fit: cover;
-    border-radius: 0;
-    box-shadow: none;
-  }
-
   .entry-owner {
-    position: absolute;
-    left: 50%;
     bottom: 24px;
-    z-index: 1;
-    transform: translateX(-50%);
-    padding: 12px 18px;
-    border: 0;
-    border-radius: 0;
-    background: none;
-    backdrop-filter: none;
   }
 
   .owner-access-form {
