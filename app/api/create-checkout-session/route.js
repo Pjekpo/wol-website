@@ -37,14 +37,19 @@ export async function POST(request) {
   }
 
   const quantity = Math.max(1, Math.min(10, Number(payload.quantity) || 1));
-  const size = String(payload.size || "M").trim().slice(0, 20);
+  const size = String(payload.size || "").trim().slice(0, 20);
   const slug = String(payload.slug || "product-001").trim().slice(0, 80);
   const origin = buildOrigin(request);
+
+  if (!size) {
+    return NextResponse.json({ error: "Select a size before checkout." }, { status: 400 });
+  }
 
   const params = new URLSearchParams();
   params.set("mode", "payment");
   params.set("success_url", `${origin}/?checkout=success`);
   params.set("cancel_url", `${origin}/?checkout=cancel`);
+  params.set("allow_promotion_codes", "true");
   params.set("line_items[0][price]", stripePriceId);
   params.set("line_items[0][quantity]", String(quantity));
   params.set("metadata[size]", size);

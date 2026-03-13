@@ -2,7 +2,7 @@
   "brand": {
     "name": "The WOL Collective",
     "navTagline": "By us. For us. Against what was built to erase us.",
-    "badge": "Drop 001 Live",
+    "badge": "Drop 001",
     "quote": "\"Style as protest. Fabric as memory. Movement as design.\""
   },
   "entry": {
@@ -22,10 +22,10 @@
   },
   "product": {
     "slug": "system-breaker-overshirt",
-    "name": "Product 001: The System Breaker Overshirt",
-    "price": 120,
+    "name": "Product 001: The IOYK Tee",
+    "price": 35,
     "currency": "GBP",
-    "priceLabel": "GBP 120.00",
+    "priceLabel": "£35.00",
     "sizes": "XS / S / M / L / XL",
     "sizeOptions": ["XS", "S", "M", "L", "XL"],
     "description": "A heavyweight black overshirt cut with calm structure, contrast seam mapping, and a clean silhouette intended to feel ceremonial without losing street function.",

@@ -1,14 +1,17 @@
 "use client";
 
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 const CART_KEY = "wol_collective_cart";
 const WAITLIST_KEY = "wol_collective_waitlist";
 const DISCOUNT_CLAIM_KEY = "wol_collective_discount_claims";
-const SCRATCHCARD_SEEN_KEY = "wol_collective_scratchcard_seen";
+const ENTRY_UNLOCKED_KEY = "wol_collective_entry_unlocked";
 const OWNER_PIN = "1234";
 const SCRATCH_THRESHOLD = 0.42;
 const ENTRY_REVEAL_DURATION_MS = 520;
+const CONTACT_EMAIL = "thewolcollective@gmail.com";
 
 function formatMoney(value, currency) {
   return new Intl.NumberFormat("en-GB", {
@@ -38,11 +41,14 @@ function loadDiscountClaims() {
 }
 
 export default function Storefront({ content }) {
+  const router = useRouter();
   const [selectedQuantity, setSelectedQuantity] = useState(1);
-  const [selectedSize, setSelectedSize] = useState(content.product.sizeOptions[2] || content.product.sizeOptions[0]);
+  const [selectedSize, setSelectedSize] = useState("");
   const [activeShowcaseFrame, setActiveShowcaseFrame] = useState("front");
-  const [cart, setCart] = useState({ quantity: 0, size: content.product.sizeOptions[2] || content.product.sizeOptions[0] });
+  const [cart, setCart] = useState({ quantity: 0, size: "" });
   const [cartOpen, setCartOpen] = useState(false);
+  const [cartNoticeVisible, setCartNoticeVisible] = useState(false);
+  const [cartNoticeText, setCartNoticeText] = useState("");
   const [checkoutMessage, setCheckoutMessage] = useState("");
   const [checkoutState, setCheckoutState] = useState("");
   const [waitlistMessage, setWaitlistMessage] = useState("");
@@ -59,6 +65,7 @@ export default function Storefront({ content }) {
   const [discountEmail, setDiscountEmail] = useState("");
   const [discountClaimState, setDiscountClaimState] = useState("");
   const [discountClaimMessage, setDiscountClaimMessage] = useState("");
+  const [mailChooserOpen, setMailChooserOpen] = useState(false);
   const ownerPinInputRef = useRef(null);
   const scratchCanvasRef = useRef(null);
   const scratchCardRef = useRef(null);
@@ -67,6 +74,7 @@ export default function Storefront({ content }) {
   const scratchRevealRef = useRef(false);
   const scratchCheckFrameRef = useRef(0);
   const entryRevealTimerRef = useRef(0);
+  const cartNoticeTimerRef = useRef(0);
 
   useEffect(() => {
     try {
@@ -78,13 +86,25 @@ export default function Storefront({ content }) {
       if (parsed && typeof parsed.quantity === "number") {
         setCart({
           quantity: Math.max(0, Math.min(10, parsed.quantity)),
-          size: parsed.size || content.product.sizeOptions[2] || content.product.sizeOptions[0]
+          size: parsed.size || ""
         });
       }
     } catch {
       return;
     }
   }, [content.product.sizeOptions]);
+
+  useEffect(() => {
+    try {
+      if (sessionStorage.getItem(ENTRY_UNLOCKED_KEY) === "1") {
+        setEntryUnlocked(true);
+        setEntryGateVisible(false);
+        setOwnerAccessOpen(false);
+      }
+    } catch {
+      return;
+    }
+  }, []);
 
   useEffect(() => {
     if (cart.quantity > 0) {
@@ -115,14 +135,7 @@ export default function Storefront({ content }) {
   }, [ownerAccessOpen]);
 
   useEffect(() => {
-    try {
-      if (!localStorage.getItem(SCRATCHCARD_SEEN_KEY)) {
-        localStorage.setItem(SCRATCHCARD_SEEN_KEY, new Date().toISOString());
-        setScratchcardOpen(true);
-      }
-    } catch {
-      setScratchcardOpen(true);
-    }
+    setScratchcardOpen(true);
   }, []);
 
   useEffect(() => {
@@ -215,8 +228,28 @@ export default function Storefront({ content }) {
       if (entryRevealTimerRef.current) {
         window.clearTimeout(entryRevealTimerRef.current);
       }
+      if (cartNoticeTimerRef.current) {
+        window.clearTimeout(cartNoticeTimerRef.current);
+      }
     };
   }, []);
+
+  useEffect(() => {
+    if (!mailChooserOpen) {
+      return undefined;
+    }
+
+    function handleMailChooserKeydown(event) {
+      if (event.key === "Escape") {
+        setMailChooserOpen(false);
+      }
+    }
+
+    window.addEventListener("keydown", handleMailChooserKeydown);
+    return () => {
+      window.removeEventListener("keydown", handleMailChooserKeydown);
+    };
+  }, [mailChooserOpen]);
 
   const cartSubtotal = useMemo(() => {
     return formatMoney(cart.quantity * content.product.price, content.product.currency);
@@ -268,14 +301,35 @@ export default function Storefront({ content }) {
     });
   }
 
+  function showCartNotice(message) {
+    setCartNoticeText(message);
+    setCartNoticeVisible(true);
+
+    if (cartNoticeTimerRef.current) {
+      window.clearTimeout(cartNoticeTimerRef.current);
+    }
+
+    cartNoticeTimerRef.current = window.setTimeout(() => {
+      setCartNoticeVisible(false);
+      cartNoticeTimerRef.current = 0;
+    }, 4200);
+  }
+
   function addToCart() {
+    if (!selectedSize) {
+      setCheckoutState("error");
+      setCheckoutMessage("Select a size before adding to cart.");
+      return;
+    }
+
     setCart({
       quantity: Math.max(0, Math.min(10, cart.quantity + selectedQuantity)),
       size: selectedSize
     });
-    setCheckoutState("success");
-    setCheckoutMessage("Added to cart.");
-    setCartOpen(true);
+    setCheckoutState("");
+    setCheckoutMessage("");
+    setCartOpen(false);
+    showCartNotice(`${showcaseProductName} added to cart`);
   }
 
   async function startCheckout(quantity, size) {
@@ -311,6 +365,12 @@ export default function Storefront({ content }) {
   }
 
   async function handleBuyNow() {
+    if (!selectedSize) {
+      setCheckoutState("error");
+      setCheckoutMessage("Select a size before continuing.");
+      return;
+    }
+
     setCart({ quantity: selectedQuantity, size: selectedSize });
     setCartOpen(true);
     await startCheckout(selectedQuantity, selectedSize);
@@ -393,35 +453,31 @@ export default function Storefront({ content }) {
       return;
     }
 
-    const endpoint = content.waitlist.endpoint || "";
+    try {
+      const response = await fetch("/api/discount-claims", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json"
+        },
+        body: JSON.stringify({
+          email: normalized,
+          source: "scratchcard",
+          reward: "10% off"
+        })
+      });
 
-    if (endpoint) {
-      try {
-        const response = await fetch(endpoint, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json"
-          },
-          body: JSON.stringify({
-            email: normalized,
-            source: "scratchcard",
-            reward: "10% off"
-          })
-        });
-
-        if (!response.ok) {
-          throw new Error("Endpoint rejected request.");
-        }
-
-        setDiscountClaimState("success");
-        setDiscountClaimMessage("Discount claim received. Check your inbox.");
-        setDiscountEmail("");
-        return;
-      } catch {
-        setDiscountClaimState("error");
-        setDiscountClaimMessage("Claim endpoint failed, so the email was saved only in this browser.");
+      if (!response.ok) {
+        throw new Error("Discount claim endpoint rejected request.");
       }
+
+      setDiscountClaimState("success");
+      setDiscountClaimMessage("Claim received. Your launch code will be emailed when the drop is sent.");
+      setDiscountEmail("");
+      return;
+    } catch {
+      setDiscountClaimState("error");
+      setDiscountClaimMessage("Server claim storage is not configured yet, so the email was saved only in this browser.");
     }
 
     const claims = loadDiscountClaims();
@@ -452,6 +508,11 @@ export default function Storefront({ content }) {
     if (ownerPin.trim() === OWNER_PIN) {
       if (entryRevealTimerRef.current) {
         window.clearTimeout(entryRevealTimerRef.current);
+      }
+      try {
+        sessionStorage.setItem(ENTRY_UNLOCKED_KEY, "1");
+      } catch {
+        // Ignore storage failures and still unlock the storefront.
       }
       setEntryUnlocked(true);
       setOwnerPin("");
@@ -587,11 +648,45 @@ export default function Storefront({ content }) {
     setScratchcardOpen(false);
   }
 
+  function openScratchcard() {
+    setScratchcardOpen(true);
+  }
+
   function scrollToTop() {
     window.scrollTo({
       top: 0,
       behavior: "smooth"
     });
+  }
+
+  function openCartPage() {
+    setCartNoticeVisible(false);
+    router.push("/cart");
+  }
+
+  function openMailChooser() {
+    setMailChooserOpen(true);
+  }
+
+  function closeMailChooser() {
+    setMailChooserOpen(false);
+  }
+
+  function openMailDestination(destination) {
+    if (destination === "gmail") {
+      window.open(`https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(CONTACT_EMAIL)}`, "_blank", "noopener,noreferrer");
+      closeMailChooser();
+      return;
+    }
+
+    if (destination === "outlook") {
+      window.open(`https://outlook.live.com/mail/0/deeplink/compose?to=${encodeURIComponent(CONTACT_EMAIL)}`, "_blank", "noopener,noreferrer");
+      closeMailChooser();
+      return;
+    }
+
+    window.location.href = `mailto:${CONTACT_EMAIL}`;
+    closeMailChooser();
   }
 
   const scratchcardModal = scratchcardOpen ? (
@@ -640,12 +735,63 @@ export default function Storefront({ content }) {
               />
               <button className="primary-button scratchcard-submit" type="submit">Claim 10%</button>
             </div>
-            <p className="scratchcard-note">Scratch with your finger or mouse. Your claim stays in this browser if no live endpoint is connected.</p>
+            <p className="scratchcard-note">Scratch with your finger or mouse. Once server storage is configured, launch codes will be emailed automatically when the drop is sent.</p>
             <p className={`inline-message ${discountClaimState}`}>{discountClaimMessage}</p>
           </form>
         </div>
       </div>
     </div>
+  ) : null;
+
+  const cartNotice = (
+    <button
+      className={`cart-notice ${cartNoticeVisible ? "is-visible" : ""}`}
+      type="button"
+      onClick={openCartPage}
+      aria-hidden={!cartNoticeVisible}
+      tabIndex={cartNoticeVisible ? 0 : -1}
+    >
+      <span className="cart-notice-kicker">Added to cart</span>
+      <span className="cart-notice-copy">{cartNoticeText || "Open cart"}</span>
+      <span className="cart-notice-link" aria-hidden="true">Open cart -&gt;</span>
+    </button>
+  );
+
+  const mailChooserModal = mailChooserOpen ? (
+    <div
+      className="mail-chooser-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="mailChooserTitle"
+      onClick={closeMailChooser}
+    >
+      <div className="mail-chooser-modal" onClick={(event) => event.stopPropagation()}>
+        <button className="mail-chooser-close" type="button" onClick={closeMailChooser}>
+          Close
+        </button>
+        <p className="mail-chooser-kicker">Email us</p>
+        <h2 id="mailChooserTitle">Choose where to open your message.</h2>
+        <p className="mail-chooser-copy">{CONTACT_EMAIL}</p>
+        <div className="mail-chooser-actions">
+          <button className="mail-chooser-option" type="button" onClick={() => openMailDestination("gmail")}>
+            Open Gmail
+          </button>
+          <button className="mail-chooser-option" type="button" onClick={() => openMailDestination("outlook")}>
+            Open Outlook
+          </button>
+          <button className="mail-chooser-option is-secondary" type="button" onClick={() => openMailDestination("other")}>
+            Other mail app
+          </button>
+        </div>
+      </div>
+    </div>
+  ) : null;
+
+  const discountCornerPrompt = entryUnlocked && !scratchcardOpen ? (
+    <button className="discount-corner-prompt" type="button" onClick={openScratchcard}>
+      <span className="discount-corner-kicker">Offer</span>
+      <span className="discount-corner-copy">Claim 10% off</span>
+    </button>
   ) : null;
 
   const entryScreen = entryGateVisible ? (
@@ -707,32 +853,33 @@ export default function Storefront({ content }) {
 
   return (
     <>
+      {mailChooserModal}
       {scratchcardModal}
+      {discountCornerPrompt}
+      {cartNotice}
       <div className={`storefront-shell ${entryUnlocked ? "is-visible" : ""}`} aria-hidden={!entryUnlocked}>
         <main className="rebuild-site" id="top">
           <section className="brand-banner" aria-label="Site banner">
             <div className="brand-banner-wordmark-wrap">
-              <p className="brand-banner-wordmark">thewolcollective</p>
+              <img
+                className="brand-banner-logo"
+                src="/CHROME LOGO.png"
+                alt="thewolcollective"
+              />
             </div>
             <div className="brand-banner-actions" aria-label="Banner actions">
-              <button className="brand-banner-action" type="button" aria-label="Search">
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                  <circle cx="11" cy="11" r="6.5" />
-                  <path d="M16 16L21 21" />
-                </svg>
-              </button>
               <button className="brand-banner-action" type="button" aria-label="Account">
                 <svg viewBox="0 0 24 24" aria-hidden="true">
                   <circle cx="12" cy="8" r="3.25" />
                   <path d="M5 20C5 16.8 8 14.5 12 14.5C16 14.5 19 16.8 19 20" />
                 </svg>
               </button>
-              <button className="brand-banner-action" type="button" aria-label="Bag">
+              <Link className="brand-banner-action" href="/cart" aria-label="Bag">
                 <svg viewBox="0 0 24 24" aria-hidden="true">
                   <path d="M6.5 8.5H17.5L16.5 20H7.5L6.5 8.5Z" />
                   <path d="M9 9V7.5C9 5.57 10.57 4 12.5 4C14.43 4 16 5.57 16 7.5V9" />
                 </svg>
-              </button>
+              </Link>
             </div>
           </section>
           <section className="product-showcase" aria-labelledby="productShowcaseTitle">
@@ -799,7 +946,11 @@ export default function Storefront({ content }) {
                           className={`product-showcase-size ${isSelected ? "is-active" : ""}`}
                           type="button"
                           aria-pressed={isSelected}
-                          onClick={() => setSelectedSize(size)}
+                          onClick={() => {
+                            setSelectedSize(size);
+                            setCheckoutState("");
+                            setCheckoutMessage("");
+                          }}
                         >
                           {size}
                         </button>
@@ -828,41 +979,41 @@ export default function Storefront({ content }) {
                   <p>{content.product.story}</p>
                 </div>
 
-                <p className={`inline-message ${checkoutState}`}>{checkoutMessage}</p>
+                {checkoutState === "error" ? <p className={`inline-message ${checkoutState}`}>{checkoutMessage}</p> : null}
               </article>
             </div>
           </section>
           <footer className="brand-footer" aria-label="Site footer">
             <div className="brand-footer-grid">
-              <div className="brand-footer-brand">
-                <p className="brand-footer-kicker">{content.footer.right}</p>
-                <p className="brand-footer-copy">{content.hero.text}</p>
-              </div>
               <div className="brand-footer-wordmark-slot">
-                <p className="brand-footer-wordmark">thewolcollective</p>
+                <img
+                  className="brand-footer-logo"
+                  src="/LogoRotate.gif"
+                  alt="thewolcollective"
+                />
               </div>
               <div className="brand-footer-column brand-footer-column-info">
                 <h2>Information</h2>
-                <a href="#top">About us</a>
-                <a href="#top">Privacy policy</a>
-                <a href="#top">Shipping policy</a>
-                <a href="#top">Terms of service</a>
-                <a href="#top">Contact us</a>
+                <Link href="/about">About us</Link>
+                <Link href="/privacy-policy">Privacy policy</Link>
+                <Link href="/shipping-policy">Shipping policy</Link>
+                <Link href="/terms-of-service">Terms of service</Link>
                 <div className="brand-footer-socials" aria-label="Social links">
-                  <button className="brand-footer-social" type="button" aria-label="Instagram">
-                    <svg viewBox="0 0 24 24" aria-hidden="true">
-                      <rect x="4.5" y="4.5" width="15" height="15" rx="4" />
-                      <circle cx="12" cy="12" r="3.5" />
-                      <circle cx="17.25" cy="6.75" r="0.8" fill="currentColor" stroke="none" />
+                  <a
+                    className="brand-footer-social brand-footer-social-instagram"
+                    href="https://www.instagram.com/thewolcollective/"
+                    target="_blank"
+                    rel="noreferrer"
+                    aria-label="Instagram"
+                  >
+                    <svg className="brand-footer-social-icon brand-footer-social-icon-instagram" viewBox="0 0 24 24" aria-hidden="true">
+                      <rect x="3.75" y="3.75" width="16.5" height="16.5" rx="4.8" />
+                      <circle cx="12" cy="12" r="4.1" />
+                      <circle cx="17.45" cy="6.55" r="1.05" fill="currentColor" stroke="none" />
                     </svg>
-                  </button>
-                  <button className="brand-footer-social" type="button" aria-label="Pinterest">
-                    <svg viewBox="0 0 24 24" aria-hidden="true">
-                      <path d="M12.2 4C7.9 4 5 6.95 5 10.9C5 13.5 6.47 15.68 8.7 16.5L9.7 12.72C9.49 12.28 9.39 11.79 9.39 11.28C9.39 9.84 10.22 8.76 11.25 8.76C12.13 8.76 12.56 9.42 12.56 10.22C12.56 11.15 11.97 12.55 11.67 13.82C11.42 14.88 12.2 15.75 13.25 15.75C15.13 15.75 16.39 13.77 16.39 10.93C16.39 8.41 14.57 6.66 11.96 6.66C9 6.66 7.27 8.88 7.27 11.18C7.27 12.12 7.63 13.13 8.08 13.68C8.18 13.8 8.2 13.9 8.17 14.05L7.82 15.43C7.77 15.62 7.66 15.66 7.49 15.58C5.48 14.65 4.22 12.62 4.22 10.35C4.22 6.3 7.16 2.58 12.69 2.58C17.13 2.58 20.58 5.74 20.58 9.98C20.58 14.4 17.79 17.95 13.92 17.95C12.78 17.95 11.71 17.36 11.35 16.66L10.65 19.3C10.4 20.25 9.72 21.44 9.17 22.2C10.11 22.49 11.12 22.64 12.17 22.64C17.29 22.64 21.44 18.49 21.44 13.37C21.44 8.15 17.26 4 12.2 4Z" />
-                    </svg>
-                  </button>
-                  <button className="brand-footer-social" type="button" aria-label="Email">
-                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                  </a>
+                  <button className="brand-footer-social" type="button" onClick={openMailChooser} aria-label="Email">
+                    <svg className="brand-footer-social-icon" viewBox="0 0 24 24" aria-hidden="true">
                       <rect x="3.5" y="6.5" width="17" height="11" rx="2" />
                       <path d="M4.5 8L12 13.5L19.5 8" />
                     </svg>
@@ -877,7 +1028,10 @@ export default function Storefront({ content }) {
               </div>
             </div>
             <div className="brand-footer-meta">
-              <p className="brand-footer-copyright">Copyright {new Date().getFullYear()} THEWOLCOLLECTIVE</p>
+              <div className="brand-footer-meta-copy">
+                <p className="brand-footer-copyright">Copyright {new Date().getFullYear()} THEWOLCOLLECTIVE</p>
+                <p className="brand-footer-builder">Built by Ekpo Software Solutions (praiseekpo2@gmail.com)</p>
+              </div>
               <button className="brand-footer-top" type="button" aria-label="Back to top" onClick={scrollToTop}>
                 <svg viewBox="0 0 24 24" aria-hidden="true">
                   <path d="M6 14L12 8L18 14" />
