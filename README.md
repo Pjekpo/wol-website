@@ -13,11 +13,12 @@ Add these to the Vercel project before testing checkout:
 
 - `STRIPE_SECRET_KEY`
 - `STRIPE_PRICE_ID`
-- `UPSTASH_REDIS_REST_URL`
-- `UPSTASH_REDIS_REST_TOKEN`
+- `SUPABASE_URL`
+- `SUPABASE_SERVICE_ROLE_KEY`
 - `RESEND_API_KEY`
 - `RESEND_FROM_EMAIL`
 - `DROP_ADMIN_SECRET`
+- `DROP_GO_LIVE_AT`
 - `SITE_URL`
 
 Optional:
@@ -43,14 +44,19 @@ The site uses a browser cart and a Next.js route at `app/api/create-checkout-ses
 The scratchcard claim form now supports a real no-login launch-discount system:
 
 - Claims are saved server-side through `app/api/discount-claims/route.js`
-- Emails are stored in Upstash Redis
-- Unique single-use Stripe promotion codes are created when you send the drop
-- Launch emails are sent through Resend
+- Emails are stored in Supabase
+- Unique single-use Stripe promotion codes are created as soon as someone claims the offer
+- The thank-you email with the code is sent immediately through Resend
 - Stripe Checkout now allows promotion codes
+- A cron-safe route can auto-dispatch all unsent launch emails once `DROP_GO_LIVE_AT` has passed
+
+Before using it, run the schema in `supabase/launch-discounts.sql` inside the Supabase SQL editor.
+
+For a quick Resend smoke test, you can use `onboarding@resend.dev` as `RESEND_FROM_EMAIL` while setting things up.
 
 ### Trigger the launch email send
 
-When you are ready to send the drop email, call:
+If you ever need to send codes to claims that were saved but not emailed yet, call:
 
 ```bash
 curl -X POST https://your-domain.com/api/admin/send-drop-discounts \
@@ -61,9 +67,43 @@ curl -X POST https://your-domain.com/api/admin/send-drop-discounts \
 
 That endpoint sends codes to all unsent claim emails up to the limit you provide.
 
+### Automatic drop dispatch
+
+If you want the launch email blast to happen automatically at drop time, use:
+
+```text
+GET /api/cron/send-drop-discounts
+```
+
+That route:
+
+- waits until `DROP_GO_LIVE_AT`
+- sends codes only to claims that have not been emailed yet
+- can be called by a Vercel Cron job in production
+- can also be tested manually with `Authorization: Bearer YOUR_DROP_ADMIN_SECRET`
+- should be scheduled in UTC
+
+Example manual test:
+
+```bash
+curl "http://localhost:3000/api/cron/send-drop-discounts?limit=100" \
+  -H "Authorization: Bearer YOUR_DROP_ADMIN_SECRET"
+```
+
+### Send a test email
+
+To verify Resend before launch, call:
+
+```bash
+curl -X POST https://your-domain.com/api/admin/send-test-email \
+  -H "Authorization: Bearer YOUR_DROP_ADMIN_SECRET" \
+  -H "Content-Type: application/json" \
+  -d "{\"email\":\"thewolcollective@gmail.com\"}"
+```
+
 ### Notes
 
 - There is no customer login system in this flow.
 - The admin send route is protected only by `DROP_ADMIN_SECRET`, so keep it private.
 - `RESEND_FROM_EMAIL` must be a sender address that Resend has permission to send from.
-- If Redis/Resend are not configured yet, the storefront still falls back to browser-only saving for local testing.
+- If Supabase, Stripe, or Resend are not configured correctly, the claim form will fail instead of pretending the code was sent.

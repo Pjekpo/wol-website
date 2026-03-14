@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import content from "../../data/content.json";
@@ -20,6 +19,9 @@ export default function CartPage() {
     quantity: 0,
     size: ""
   });
+  const [checkoutState, setCheckoutState] = useState("");
+  const [checkoutMessage, setCheckoutMessage] = useState("");
+  const [checkoutBusy, setCheckoutBusy] = useState(false);
   const productName = content.product.name.replace(/^Product\s*\d+:\s*/i, "");
 
   useEffect(() => {
@@ -49,6 +51,36 @@ export default function CartPage() {
     }
   }, [cart]);
 
+  useEffect(() => {
+    const checkout = new URLSearchParams(window.location.search).get("checkout");
+
+    if (checkout === "success") {
+      setCheckoutState("success");
+      setCheckoutMessage("Payment complete. Stripe redirected back successfully.");
+      setCart({
+        quantity: 0,
+        size: ""
+      });
+
+      try {
+        localStorage.removeItem(CART_KEY);
+      } catch {
+        return;
+      }
+
+      return;
+    }
+
+    if (checkout === "cancel") {
+      setCheckoutState("error");
+      setCheckoutMessage("Checkout was cancelled. Your cart is still available.");
+      return;
+    }
+
+    setCheckoutState("");
+    setCheckoutMessage("");
+  }, []);
+
   const subtotal = useMemo(() => {
     return formatMoney(cart.quantity * content.product.price, content.product.currency);
   }, [cart.quantity]);
@@ -63,12 +95,55 @@ export default function CartPage() {
   }
 
   function goBackToStore() {
-    if (window.history.length > 1) {
-      router.back();
+    router.push("/");
+  }
+
+  async function handleCheckout() {
+    if (cart.quantity <= 0) {
+      setCheckoutState("error");
+      setCheckoutMessage("Add the product to your cart first.");
       return;
     }
 
-    router.push("/");
+    if (!cart.size) {
+      setCheckoutState("error");
+      setCheckoutMessage("Select a size on the product page before checkout.");
+      return;
+    }
+
+    try {
+      setCheckoutBusy(true);
+      setCheckoutState("");
+      setCheckoutMessage("Redirecting to secure checkout...");
+
+      const response = await fetch("/api/create-checkout-session", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          quantity: cart.quantity,
+          size: cart.size,
+          slug: content.product.slug,
+          returnPath: "/cart"
+        })
+      });
+
+      const payload = await response.json();
+
+      if (!response.ok) {
+        setCheckoutState("error");
+        setCheckoutMessage(payload.error || "Unable to start checkout.");
+        setCheckoutBusy(false);
+        return;
+      }
+
+      window.location.assign(payload.url);
+    } catch {
+      setCheckoutState("error");
+      setCheckoutMessage("Checkout request failed. Check your deployment and Stripe configuration.");
+      setCheckoutBusy(false);
+    }
   }
 
   return (
@@ -82,7 +157,8 @@ export default function CartPage() {
         <div className="cart-page-intro">
           <p className="cart-page-kicker">Cart</p>
           <h1>Your selection</h1>
-          <p>Review your item below. Checkout is visible for the flow, but it is inactive for now.</p>
+          <p>Review your item below and continue to Stripe Checkout when you are ready.</p>
+          {checkoutMessage ? <p className={`inline-message ${checkoutState}`}>{checkoutMessage}</p> : null}
         </div>
 
         {cart.quantity <= 0 ? (
@@ -125,10 +201,10 @@ export default function CartPage() {
                 <span>Subtotal</span>
                 <strong>{subtotal}</strong>
               </div>
-              <button className="cart-page-checkout" type="button" disabled>
-                Checkout
+              <button className="cart-page-checkout" type="button" onClick={handleCheckout} disabled={checkoutBusy || cart.quantity <= 0}>
+                {checkoutBusy ? "Redirecting..." : "Checkout"}
               </button>
-              <p className="cart-page-note">Checkout is intentionally inactive right now.</p>
+              <p className="cart-page-note">Stripe Checkout accepts your discount code on the hosted payment page.</p>
             </aside>
           </div>
         )}

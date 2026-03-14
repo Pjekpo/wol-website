@@ -1,4 +1,6 @@
-﻿import Storefront from "../components/storefront";
+"use client";
+
+import Storefront from "../components/storefront";
 import content from "../data/content.json";
 
 export default function Page() {

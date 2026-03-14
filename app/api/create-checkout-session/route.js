@@ -17,6 +17,13 @@ function buildOrigin(request) {
   return new URL(request.url).origin;
 }
 
+function buildReturnUrl(origin, returnPath, checkoutState) {
+  const safeReturnPath = String(returnPath || "/").trim().startsWith("/") ? String(returnPath || "/").trim() : "/";
+  const url = new URL(safeReturnPath || "/", origin);
+  url.searchParams.set("checkout", checkoutState);
+  return url.toString();
+}
+
 export async function POST(request) {
   const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
   const stripePriceId = process.env.STRIPE_PRICE_ID;
@@ -39,6 +46,7 @@ export async function POST(request) {
   const quantity = Math.max(1, Math.min(10, Number(payload.quantity) || 1));
   const size = String(payload.size || "").trim().slice(0, 20);
   const slug = String(payload.slug || "product-001").trim().slice(0, 80);
+  const returnPath = String(payload.returnPath || "/").trim();
   const origin = buildOrigin(request);
 
   if (!size) {
@@ -47,8 +55,8 @@ export async function POST(request) {
 
   const params = new URLSearchParams();
   params.set("mode", "payment");
-  params.set("success_url", `${origin}/?checkout=success`);
-  params.set("cancel_url", `${origin}/?checkout=cancel`);
+  params.set("success_url", buildReturnUrl(origin, returnPath, "success"));
+  params.set("cancel_url", buildReturnUrl(origin, returnPath, "cancel"));
   params.set("allow_promotion_codes", "true");
   params.set("line_items[0][price]", stripePriceId);
   params.set("line_items[0][quantity]", String(quantity));

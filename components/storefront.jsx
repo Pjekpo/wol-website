@@ -5,8 +5,6 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 const CART_KEY = "wol_collective_cart";
-const WAITLIST_KEY = "wol_collective_waitlist";
-const DISCOUNT_CLAIM_KEY = "wol_collective_discount_claims";
 const ENTRY_UNLOCKED_KEY = "wol_collective_entry_unlocked";
 const OWNER_PIN = "1234";
 const SCRATCH_THRESHOLD = 0.42;
@@ -21,23 +19,6 @@ function formatMoney(value, currency) {
 }
 function validateEmail(email) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-}
-
-function loadStoredEntries(key) {
-  try {
-    const parsed = JSON.parse(localStorage.getItem(key) || "[]");
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-}
-
-function loadWaitlistEntries() {
-  return loadStoredEntries(WAITLIST_KEY);
-}
-
-function loadDiscountClaims() {
-  return loadStoredEntries(DISCOUNT_CLAIM_KEY);
 }
 
 export default function Storefront({ content }) {
@@ -67,6 +48,7 @@ export default function Storefront({ content }) {
   const [discountClaimMessage, setDiscountClaimMessage] = useState("");
   const [mailChooserOpen, setMailChooserOpen] = useState(false);
   const ownerPinInputRef = useRef(null);
+  const scratchModalRef = useRef(null);
   const scratchCanvasRef = useRef(null);
   const scratchCardRef = useRef(null);
   const scratchPointerActiveRef = useRef(false);
@@ -220,6 +202,23 @@ export default function Storefront({ content }) {
         window.cancelAnimationFrame(scratchCheckFrameRef.current);
         scratchCheckFrameRef.current = 0;
       }
+    };
+  }, [scratchcardOpen, scratchRevealed]);
+
+  useEffect(() => {
+    if (!scratchcardOpen || !scratchRevealed) {
+      return undefined;
+    }
+
+    const frame = window.requestAnimationFrame(() => {
+      scratchModalRef.current?.scrollTo({
+        top: scratchModalRef.current.scrollHeight,
+        behavior: "smooth"
+      });
+    });
+
+    return () => {
+      window.cancelAnimationFrame(frame);
     };
   }, [scratchcardOpen, scratchRevealed]);
 
@@ -389,7 +388,7 @@ export default function Storefront({ content }) {
   async function handleWaitlistSubmit(event) {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
-    const email = String(formData.get("email") || "").trim();
+    const email = String(formData.get("email") || "").trim().toLowerCase();
 
     if (!validateEmail(email)) {
       setWaitlistState("error");
@@ -397,50 +396,38 @@ export default function Storefront({ content }) {
       return;
     }
 
-    const endpoint = content.waitlist.endpoint || "";
+    try {
+      const response = await fetch("/api/discount-claims", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json"
+        },
+        body: JSON.stringify({
+          email,
+          source: "waitlist",
+          reward: "10% off"
+        })
+      });
 
-    if (endpoint) {
-      try {
-        const response = await fetch(endpoint, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json"
-          },
-          body: JSON.stringify({ email })
-        });
+      const payload = await response.json().catch(() => ({}));
 
-        if (!response.ok) {
-          throw new Error("Endpoint rejected request.");
-        }
-
-        setWaitlistState("success");
-        setWaitlistMessage("You are on the waitlist.");
-        event.currentTarget.reset();
-        return;
-      } catch {
-        setWaitlistState("error");
-        setWaitlistMessage("External form failed, so the email was saved only in this browser.");
+      if (!response.ok) {
+        throw new Error(payload.error || "Waitlist endpoint rejected request.");
       }
-    }
 
-    const entries = loadWaitlistEntries();
-    const normalized = email.toLowerCase();
-    const exists = entries.some(function (entry) {
-      return entry.email === normalized;
-    });
-
-    if (exists) {
       setWaitlistState("success");
-      setWaitlistMessage("This email is already saved in this browser.");
+      setWaitlistMessage(
+        payload.status === "exists"
+          ? "That email is already on the waitlist. Check your inbox for your discount code."
+          : "Thanks for joining the waitlist. Your 10% off code is already in your inbox."
+      );
+      event.currentTarget.reset();
       return;
+    } catch {
+      setWaitlistState("error");
+      setWaitlistMessage("We could not send your discount code right now. Please try again in a moment.");
     }
-
-    entries.unshift({ email: normalized, createdAt: new Date().toISOString() });
-    localStorage.setItem(WAITLIST_KEY, JSON.stringify(entries));
-    setWaitlistState("success");
-    setWaitlistMessage("Email saved in this browser.");
-    event.currentTarget.reset();
   }
 
   async function handleDiscountClaimSubmit(event) {
@@ -467,39 +454,24 @@ export default function Storefront({ content }) {
         })
       });
 
+      const payload = await response.json().catch(() => ({}));
+
       if (!response.ok) {
-        throw new Error("Discount claim endpoint rejected request.");
+        throw new Error(payload.error || "Discount claim endpoint rejected request.");
       }
 
       setDiscountClaimState("success");
-      setDiscountClaimMessage("Claim received. Your launch code will be emailed when the drop is sent.");
+      setDiscountClaimMessage(
+        payload.status === "exists"
+          ? "That email already has a 10% code. Check your inbox."
+          : "Thanks for joining the waitlist. Your 10% off code is already in your inbox."
+      );
       setDiscountEmail("");
       return;
     } catch {
       setDiscountClaimState("error");
-      setDiscountClaimMessage("Server claim storage is not configured yet, so the email was saved only in this browser.");
+      setDiscountClaimMessage("We could not send your discount code right now. Please try again in a moment.");
     }
-
-    const claims = loadDiscountClaims();
-    const exists = claims.some(function (entry) {
-      return entry.email === normalized;
-    });
-
-    if (exists) {
-      setDiscountClaimState("success");
-      setDiscountClaimMessage("This discount claim is already saved in this browser.");
-      return;
-    }
-
-    claims.unshift({
-      email: normalized,
-      reward: "10% off",
-      createdAt: new Date().toISOString()
-    });
-    localStorage.setItem(DISCOUNT_CLAIM_KEY, JSON.stringify(claims));
-    setDiscountClaimState("success");
-    setDiscountClaimMessage("Discount claim saved in this browser.");
-    setDiscountEmail("");
   }
 
   function handleOwnerAccessSubmit(event) {
@@ -691,7 +663,7 @@ export default function Storefront({ content }) {
 
   const scratchcardModal = scratchcardOpen ? (
     <div className="scratchcard-overlay" role="dialog" aria-modal="true" aria-labelledby="scratchcardTitle">
-      <div className="scratchcard-modal">
+      <div ref={scratchModalRef} className="scratchcard-modal">
         <button className="scratchcard-close" type="button" onClick={closeScratchcard}>
           Close
         </button>
@@ -735,7 +707,7 @@ export default function Storefront({ content }) {
               />
               <button className="primary-button scratchcard-submit" type="submit">Claim 10%</button>
             </div>
-            <p className="scratchcard-note">Scratch with your finger or mouse. Once server storage is configured, launch codes will be emailed automatically when the drop is sent.</p>
+            <p className="scratchcard-note">Scratch with your finger or mouse. Your 10% code is emailed immediately after you claim it.</p>
             <p className={`inline-message ${discountClaimState}`}>{discountClaimMessage}</p>
           </form>
         </div>
@@ -863,22 +835,18 @@ export default function Storefront({ content }) {
             <div className="brand-banner-wordmark-wrap">
               <img
                 className="brand-banner-logo"
-                src="/CHROME LOGO.png"
+                src="/LogoRotate.gif"
                 alt="thewolcollective"
               />
             </div>
             <div className="brand-banner-actions" aria-label="Banner actions">
-              <button className="brand-banner-action" type="button" aria-label="Account">
+              <Link className="brand-banner-cart" href="/cart" aria-label={`Cart (${cart.quantity})`}>
                 <svg viewBox="0 0 24 24" aria-hidden="true">
-                  <circle cx="12" cy="8" r="3.25" />
-                  <path d="M5 20C5 16.8 8 14.5 12 14.5C16 14.5 19 16.8 19 20" />
+                  <circle cx="9" cy="19" r="1.55" />
+                  <circle cx="17" cy="19" r="1.55" />
+                  <path d="M3 4H5.2L7.1 14H18.2L20.1 7.5H8.1" />
                 </svg>
-              </button>
-              <Link className="brand-banner-action" href="/cart" aria-label="Bag">
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M6.5 8.5H17.5L16.5 20H7.5L6.5 8.5Z" />
-                  <path d="M9 9V7.5C9 5.57 10.57 4 12.5 4C14.43 4 16 5.57 16 7.5V9" />
-                </svg>
+                <span>Cart ({cart.quantity})</span>
               </Link>
             </div>
           </section>
@@ -988,7 +956,7 @@ export default function Storefront({ content }) {
               <div className="brand-footer-wordmark-slot">
                 <img
                   className="brand-footer-logo"
-                  src="/LogoRotate.gif"
+                  src="/CHROME LOGO.png"
                   alt="thewolcollective"
                 />
               </div>
@@ -1019,12 +987,6 @@ export default function Storefront({ content }) {
                     </svg>
                   </button>
                 </div>
-              </div>
-              <div className="brand-footer-column brand-footer-column-customer">
-                <h2>For Customers</h2>
-                <a href="#top">Orders</a>
-                <a href="#top">Profile</a>
-                <a href="#top">Waitlist</a>
               </div>
             </div>
             <div className="brand-footer-meta">

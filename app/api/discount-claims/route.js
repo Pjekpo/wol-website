@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
-import { discountStorageConfigured, saveDiscountClaim } from "../../../lib/launch-discounts";
+import {
+  claimDiscountAndSendEmail,
+  launchDiscountDispatchConfigured
+} from "../../../lib/launch-discounts";
 
 export const runtime = "nodejs";
 
@@ -8,9 +11,9 @@ function validateEmail(email) {
 }
 
 export async function POST(request) {
-  if (!discountStorageConfigured()) {
+  if (!launchDiscountDispatchConfigured()) {
     return NextResponse.json(
-      { error: "Discount storage is not configured yet." },
+      { error: "Discount claims are not configured yet." },
       { status: 500 }
     );
   }
@@ -32,7 +35,7 @@ export async function POST(request) {
   }
 
   try {
-    const result = await saveDiscountClaim({
+    const result = await claimDiscountAndSendEmail({
       email,
       source,
       reward
@@ -40,10 +43,11 @@ export async function POST(request) {
 
     return NextResponse.json({
       ok: true,
-      status: result.created ? "created" : "exists"
+      status: result.created ? "created" : "exists",
+      emailed: result.emailed
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Unable to save discount claim.";
+    const message = error instanceof Error ? error.message : "Unable to create and send discount claim.";
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
