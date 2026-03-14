@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getStripe } from "../../../lib/stripe";
 import content from "../../../data/content.json";
+import { buildCartSizeSummary, getCartQuantity, normalizeCartItems } from "../../../lib/cart";
 
 export const runtime = "nodejs";
 
@@ -42,18 +43,24 @@ export async function POST(request) {
     return NextResponse.json({ error: "Invalid JSON payload." }, { status: 400 });
   }
 
-  const quantity = Math.max(1, Math.min(10, Number(payload.quantity) || 1));
-  const size = String(payload.size || "").trim().slice(0, 20);
   const slug = String(payload.slug || "product-001").trim().slice(0, 80);
   const returnPath = String(payload.returnPath || "/").trim();
   const origin = buildOrigin(request);
+  const cartItems = normalizeCartItems(
+    Array.isArray(payload.items)
+      ? payload.items
+      : {
+          quantity: Number(payload.quantity) || 0,
+          size: payload.size
+        }
+  );
   const productName = String(content.product.name || "The WOL Collective Product").replace(/^Product\s*\d+:\s*/i, "");
   const productDescription = String(content.product.description || "").trim().slice(0, 500);
   const currency = String(content.product.currency || "GBP").trim().toLowerCase();
   const unitAmount = Math.round(Number(content.product.price || 0) * 100);
 
-  if (!size) {
-    return NextResponse.json({ error: "Select a size before checkout." }, { status: 400 });
+  if (cartItems.length <= 0 || getCartQuantity(cartItems) <= 0) {
+    return NextResponse.json({ error: "Add at least one size before checkout." }, { status: 400 });
   }
 
   if (!unitAmount || unitAmount < 1) {
@@ -67,22 +74,22 @@ export async function POST(request) {
       success_url: buildReturnUrl(origin, returnPath, "success"),
       cancel_url: buildReturnUrl(origin, returnPath, "cancel"),
       allow_promotion_codes: true,
-      line_items: [
-        {
+      line_items: cartItems.map(function (item) {
+        return {
           price_data: {
             currency,
             unit_amount: unitAmount,
             product_data: {
-              name: productName,
+              name: `${productName} - ${item.size}`,
               ...(productDescription ? { description: productDescription } : {})
             }
           },
-          quantity
-        }
-      ],
+          quantity: item.quantity
+        };
+      }),
       metadata: {
-        size,
-        product_slug: slug
+        product_slug: slug,
+        size_breakdown: buildCartSizeSummary(cartItems)
       }
     });
 

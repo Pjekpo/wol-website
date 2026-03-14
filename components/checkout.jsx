@@ -5,8 +5,13 @@ import { loadStripe } from "@stripe/stripe-js";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import content from "../data/content.json";
+import {
+  CART_KEY,
+  getCartQuantity,
+  getCartSubtotal,
+  parseStoredCart
+} from "../lib/cart";
 
-const CART_KEY = "wol_collective_cart";
 const publishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || "";
 const stripePromise = publishableKey ? loadStripe(publishableKey) : null;
 
@@ -19,29 +24,20 @@ function formatMoney(value, currency) {
 
 export default function Checkout() {
   const router = useRouter();
-  const [cart, setCart] = useState({
-    quantity: 0,
-    size: ""
-  });
+  const [cart, setCart] = useState([]);
   const [cartLoaded, setCartLoaded] = useState(false);
   const [checkoutError, setCheckoutError] = useState("");
   const productName = content.product.name.replace(/^Product\s*\d+:\s*/i, "");
+  const totalQuantity = useMemo(() => {
+    return getCartQuantity(cart);
+  }, [cart]);
   const subtotal = useMemo(() => {
-    return formatMoney(cart.quantity * content.product.price, content.product.currency);
-  }, [cart.quantity]);
+    return formatMoney(getCartSubtotal(cart, content.product.price), content.product.currency);
+  }, [cart, content.product.currency, content.product.price]);
 
   useEffect(() => {
     try {
-      const raw = localStorage.getItem(CART_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (parsed && typeof parsed.quantity === "number") {
-          setCart({
-            quantity: Math.max(0, Math.min(10, parsed.quantity)),
-            size: parsed.size || ""
-          });
-        }
-      }
+      setCart(parseStoredCart(localStorage.getItem(CART_KEY)));
     } catch {
       setCheckoutError("We could not read your cart. Head back and try checkout again.");
     } finally {
@@ -50,7 +46,7 @@ export default function Checkout() {
   }, []);
 
   const checkoutOptions = useMemo(() => {
-    if (!cartLoaded || cart.quantity <= 0 || !cart.size) {
+    if (!cartLoaded || cart.length <= 0) {
       return null;
     }
 
@@ -63,8 +59,7 @@ export default function Checkout() {
             Accept: "application/json"
           },
           body: JSON.stringify({
-            quantity: cart.quantity,
-            size: cart.size,
+            items: cart,
             slug: content.product.slug
           })
         });
@@ -125,21 +120,14 @@ export default function Checkout() {
           </div>
         ) : null}
 
-        {cartLoaded && cart.quantity <= 0 ? (
+        {cartLoaded && cart.length <= 0 ? (
           <div className="checkout-page-state">
             <p>Your cart is empty.</p>
             <button className="checkout-page-return" type="button" onClick={goBackToCart}>Return to cart</button>
           </div>
         ) : null}
 
-        {cartLoaded && cart.quantity > 0 && !cart.size ? (
-          <div className="checkout-page-state">
-            <p>Select a size on the product page before starting checkout.</p>
-            <button className="checkout-page-return" type="button" onClick={goBackToCart}>Return to cart</button>
-          </div>
-        ) : null}
-
-        {cartLoaded && cart.quantity > 0 && cart.size ? (
+        {cartLoaded && cart.length > 0 ? (
           <div className="checkout-page-grid">
             <aside className="checkout-page-summary">
               <p className="checkout-page-kicker">Order</p>
@@ -149,8 +137,16 @@ export default function Checkout() {
                 </div>
                 <div className="checkout-page-product-copy">
                   <h2>{productName}</h2>
-                  <p>Size {cart.size}</p>
-                  <p>Quantity {cart.quantity}</p>
+                  <div className="checkout-page-line-items">
+                    {cart.map(function (item) {
+                      return (
+                        <p key={item.size}>
+                          Size {item.size} x {item.quantity}
+                        </p>
+                      );
+                    })}
+                  </div>
+                  <p>Total items {totalQuantity}</p>
                 </div>
               </div>
               <div className="checkout-page-summary-row">

@@ -45,6 +45,7 @@ The scratchcard claim form now supports a real no-login launch-discount system:
 
 - Claims are saved server-side through `app/api/discount-claims/route.js`
 - Emails are stored in Supabase
+- Claim emails are also created as Stripe customers
 - Unique single-use Stripe promotion codes are created as soon as someone claims the offer
 - The thank-you email with the code is sent immediately through Resend
 - Stripe Checkout now allows promotion codes

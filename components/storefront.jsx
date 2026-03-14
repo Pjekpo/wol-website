@@ -3,8 +3,13 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  CART_KEY,
+  addCartItem,
+  getCartQuantity,
+  parseStoredCart
+} from "../lib/cart";
 
-const CART_KEY = "wol_collective_cart";
 const ENTRY_UNLOCKED_KEY = "wol_collective_entry_unlocked";
 const OWNER_PIN = "1234";
 const SCRATCH_THRESHOLD = 0.42;
@@ -26,8 +31,7 @@ export default function Storefront({ content }) {
   const [selectedQuantity, setSelectedQuantity] = useState(1);
   const [selectedSize, setSelectedSize] = useState("");
   const [activeShowcaseFrame, setActiveShowcaseFrame] = useState("front");
-  const [cart, setCart] = useState({ quantity: 0, size: "" });
-  const [cartOpen, setCartOpen] = useState(false);
+  const [cart, setCart] = useState([]);
   const [cartNoticeVisible, setCartNoticeVisible] = useState(false);
   const [cartNoticeText, setCartNoticeText] = useState("");
   const [checkoutMessage, setCheckoutMessage] = useState("");
@@ -60,21 +64,11 @@ export default function Storefront({ content }) {
 
   useEffect(() => {
     try {
-      const raw = localStorage.getItem(CART_KEY);
-      if (!raw) {
-        return;
-      }
-      const parsed = JSON.parse(raw);
-      if (parsed && typeof parsed.quantity === "number") {
-        setCart({
-          quantity: Math.max(0, Math.min(10, parsed.quantity)),
-          size: parsed.size || ""
-        });
-      }
+      setCart(parseStoredCart(localStorage.getItem(CART_KEY)));
     } catch {
       return;
     }
-  }, [content.product.sizeOptions]);
+  }, []);
 
   useEffect(() => {
     try {
@@ -89,7 +83,7 @@ export default function Storefront({ content }) {
   }, []);
 
   useEffect(() => {
-    if (cart.quantity > 0) {
+    if (cart.length > 0) {
       localStorage.setItem(CART_KEY, JSON.stringify(cart));
     } else {
       localStorage.removeItem(CART_KEY);
@@ -100,7 +94,7 @@ export default function Storefront({ content }) {
     const params = new URLSearchParams(window.location.search);
     const checkout = params.get("checkout");
     if (checkout === "success") {
-      setCart({ quantity: 0, size: selectedSize });
+      setCart([]);
       setStatusBanner({ text: "Payment complete. Stripe redirected back successfully.", state: "success" });
     }
     if (checkout === "cancel") {
@@ -250,9 +244,9 @@ export default function Storefront({ content }) {
     };
   }, [mailChooserOpen]);
 
-  const cartSubtotal = useMemo(() => {
-    return formatMoney(cart.quantity * content.product.price, content.product.currency);
-  }, [cart.quantity, content.product.currency, content.product.price]);
+  const cartQuantity = useMemo(() => {
+    return getCartQuantity(cart);
+  }, [cart]);
 
   const showcaseFrames = [
     {
@@ -291,15 +285,6 @@ export default function Storefront({ content }) {
     });
   }
 
-  function updateCartQuantity(nextQuantity) {
-    setCart(function (current) {
-      return {
-        ...current,
-        quantity: Math.max(0, Math.min(10, nextQuantity))
-      };
-    });
-  }
-
   function showCartNotice(message) {
     setCartNoticeText(message);
     setCartNoticeVisible(true);
@@ -321,68 +306,15 @@ export default function Storefront({ content }) {
       return;
     }
 
-    setCart({
-      quantity: Math.max(0, Math.min(10, cart.quantity + selectedQuantity)),
-      size: selectedSize
+    setCart(function (current) {
+      return addCartItem(current, {
+        size: selectedSize,
+        quantity: selectedQuantity
+      });
     });
     setCheckoutState("");
     setCheckoutMessage("");
-    setCartOpen(false);
-    showCartNotice(`${showcaseProductName} added to cart`);
-  }
-
-  async function startCheckout(quantity, size) {
-    try {
-      setCheckoutState("success");
-      setCheckoutMessage("Creating secure checkout...");
-
-      const response = await fetch("/api/create-checkout-session", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          quantity,
-          size,
-          slug: content.product.slug
-        })
-      });
-
-      const payload = await response.json();
-
-      if (!response.ok) {
-        setCheckoutState("error");
-        setCheckoutMessage(payload.error || "Unable to start checkout.");
-        return;
-      }
-
-      window.location.assign(payload.url);
-    } catch {
-      setCheckoutState("error");
-      setCheckoutMessage("Checkout request failed. Check your deployment and Stripe configuration.");
-    }
-  }
-
-  async function handleBuyNow() {
-    if (!selectedSize) {
-      setCheckoutState("error");
-      setCheckoutMessage("Select a size before continuing.");
-      return;
-    }
-
-    setCart({ quantity: selectedQuantity, size: selectedSize });
-    setCartOpen(true);
-    await startCheckout(selectedQuantity, selectedSize);
-  }
-
-  async function handleCheckoutFromCart() {
-    if (cart.quantity <= 0) {
-      setCheckoutState("error");
-      setCheckoutMessage("Add the product to your cart first.");
-      return;
-    }
-
-    await startCheckout(cart.quantity, cart.size);
+    showCartNotice(`${showcaseProductName} (${selectedSize}) added to cart`);
   }
 
   async function handleWaitlistSubmit(event) {
@@ -848,13 +780,13 @@ export default function Storefront({ content }) {
               />
             </div>
             <div className="brand-banner-actions" aria-label="Banner actions">
-              <Link className="brand-banner-cart" href="/cart" aria-label={`Cart (${cart.quantity})`}>
+              <Link className="brand-banner-cart" href="/cart" aria-label={`Cart (${cartQuantity})`}>
                 <svg viewBox="0 0 24 24" aria-hidden="true">
                   <circle cx="9" cy="19" r="1.55" />
                   <circle cx="17" cy="19" r="1.55" />
                   <path d="M3 4H5.2L7.1 14H18.2L20.1 7.5H8.1" />
                 </svg>
-                <span>Cart ({cart.quantity})</span>
+                <span>Cart ({cartQuantity})</span>
               </Link>
             </div>
           </section>

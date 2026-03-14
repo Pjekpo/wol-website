@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import {
   claimDiscountAndSendEmail,
+  getMissingLaunchDiscountEnvVars,
   launchDiscountDispatchConfigured
 } from "../../../lib/launch-discounts";
 
@@ -12,8 +13,12 @@ function validateEmail(email) {
 
 export async function POST(request) {
   if (!launchDiscountDispatchConfigured()) {
+    const missingEnv = getMissingLaunchDiscountEnvVars();
+
     return NextResponse.json(
-      { error: "Discount claims are not configured yet." },
+      {
+        error: `Discount claims are not configured yet. Missing: ${missingEnv.join(", ")}`
+      },
       { status: 500 }
     );
   }

@@ -3,8 +3,13 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import content from "../../data/content.json";
-
-const CART_KEY = "wol_collective_cart";
+import {
+  CART_KEY,
+  getCartQuantity,
+  getCartSubtotal,
+  parseStoredCart,
+  updateCartItemQuantity
+} from "../../lib/cart";
 
 function formatMoney(value, currency) {
   return new Intl.NumberFormat("en-GB", {
@@ -15,10 +20,7 @@ function formatMoney(value, currency) {
 
 export default function CartPage() {
   const router = useRouter();
-  const [cart, setCart] = useState({
-    quantity: 0,
-    size: ""
-  });
+  const [cart, setCart] = useState([]);
   const [checkoutState, setCheckoutState] = useState("");
   const [checkoutMessage, setCheckoutMessage] = useState("");
   const [checkoutBusy, setCheckoutBusy] = useState(false);
@@ -26,25 +28,14 @@ export default function CartPage() {
 
   useEffect(() => {
     try {
-      const raw = localStorage.getItem(CART_KEY);
-      if (!raw) {
-        return;
-      }
-
-      const parsed = JSON.parse(raw);
-      if (parsed && typeof parsed.quantity === "number") {
-        setCart({
-          quantity: Math.max(0, Math.min(10, parsed.quantity)),
-          size: parsed.size || ""
-        });
-      }
+      setCart(parseStoredCart(localStorage.getItem(CART_KEY)));
     } catch {
       return;
     }
   }, []);
 
   useEffect(() => {
-    if (cart.quantity > 0) {
+    if (cart.length > 0) {
       localStorage.setItem(CART_KEY, JSON.stringify(cart));
     } else {
       localStorage.removeItem(CART_KEY);
@@ -57,10 +48,7 @@ export default function CartPage() {
     if (checkout === "success") {
       setCheckoutState("success");
       setCheckoutMessage("Payment complete. Stripe redirected back successfully.");
-      setCart({
-        quantity: 0,
-        size: ""
-      });
+      setCart([]);
 
       try {
         localStorage.removeItem(CART_KEY);
@@ -81,16 +69,21 @@ export default function CartPage() {
     setCheckoutMessage("");
   }, []);
 
-  const subtotal = useMemo(() => {
-    return formatMoney(cart.quantity * content.product.price, content.product.currency);
-  }, [cart.quantity]);
+  const totalQuantity = useMemo(() => {
+    return getCartQuantity(cart);
+  }, [cart]);
 
-  function updateQuantity(delta) {
+  const subtotal = useMemo(() => {
+    return formatMoney(getCartSubtotal(cart, content.product.price), content.product.currency);
+  }, [cart, content.product.currency, content.product.price]);
+
+  function updateQuantity(size, delta) {
     setCart(function (current) {
-      return {
-        ...current,
-        quantity: Math.max(0, Math.min(10, current.quantity + delta))
-      };
+      const existingItem = current.find(function (item) {
+        return item.size === size;
+      });
+
+      return updateCartItemQuantity(current, size, (existingItem?.quantity || 0) + delta);
     });
   }
 
@@ -99,15 +92,9 @@ export default function CartPage() {
   }
 
   async function handleCheckout() {
-    if (cart.quantity <= 0) {
+    if (totalQuantity <= 0) {
       setCheckoutState("error");
       setCheckoutMessage("Add the product to your cart first.");
-      return;
-    }
-
-    if (!cart.size) {
-      setCheckoutState("error");
-      setCheckoutMessage("Select a size on the product page before checkout.");
       return;
     }
 
@@ -138,7 +125,7 @@ export default function CartPage() {
           {checkoutMessage ? <p className={`inline-message ${checkoutState}`}>{checkoutMessage}</p> : null}
         </div>
 
-        {cart.quantity <= 0 ? (
+        {totalQuantity <= 0 ? (
           <div className="cart-page-empty">
             <p>Your cart is empty.</p>
             <button className="cart-page-return" type="button" onClick={goBackToStore}>Return to product</button>
@@ -152,14 +139,21 @@ export default function CartPage() {
               <div className="cart-page-item-copy">
                 <p className="cart-page-item-kicker">{content.brand.badge}</p>
                 <h2>{productName}</h2>
-                <p className="cart-page-item-meta">Size {cart.size || "Not selected"}</p>
-                <div className="cart-page-quantity">
-                  <span>Quantity</span>
-                  <div className="cart-page-quantity-controls" aria-label="Cart quantity controls">
-                    <button type="button" aria-label="Decrease quantity" onClick={() => updateQuantity(-1)}>-</button>
-                    <strong>{cart.quantity}</strong>
-                    <button type="button" aria-label="Increase quantity" onClick={() => updateQuantity(1)}>+</button>
-                  </div>
+                <div className="cart-page-line-items" aria-label="Selected sizes">
+                  {cart.map(function (item) {
+                    return (
+                      <div className="cart-page-line" key={item.size}>
+                        <div className="cart-page-line-copy">
+                          <p className="cart-page-item-meta">Size {item.size}</p>
+                        </div>
+                        <div className="cart-page-quantity-controls" aria-label={`Quantity controls for size ${item.size}`}>
+                          <button type="button" aria-label={`Decrease quantity for size ${item.size}`} onClick={() => updateQuantity(item.size, -1)}>-</button>
+                          <strong>{item.quantity}</strong>
+                          <button type="button" aria-label={`Increase quantity for size ${item.size}`} onClick={() => updateQuantity(item.size, 1)}>+</button>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             </article>
@@ -171,14 +165,18 @@ export default function CartPage() {
                 <span>{content.product.priceLabel}</span>
               </div>
               <div className="cart-page-summary-row">
-                <span>Quantity</span>
-                <span>{cart.quantity}</span>
+                <span>Total items</span>
+                <span>{totalQuantity}</span>
+              </div>
+              <div className="cart-page-summary-row">
+                <span>Sizes</span>
+                <span>{cart.map(function (item) { return item.size; }).join(", ")}</span>
               </div>
               <div className="cart-page-summary-row total">
                 <span>Subtotal</span>
                 <strong>{subtotal}</strong>
               </div>
-              <button className="cart-page-checkout" type="button" onClick={handleCheckout} disabled={checkoutBusy || cart.quantity <= 0}>
+              <button className="cart-page-checkout" type="button" onClick={handleCheckout} disabled={checkoutBusy || totalQuantity <= 0}>
                 {checkoutBusy ? "Opening..." : "Checkout"}
               </button>
               <p className="cart-page-note">Your discount code can be entered inside the secure Stripe checkout page.</p>
