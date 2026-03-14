@@ -12,7 +12,7 @@ This repo did not. That mismatch is what kept causing deployment confusion.
 Add these to the Vercel project before testing checkout:
 
 - `STRIPE_SECRET_KEY`
-- `STRIPE_PRICE_ID`
+- `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`
 - `SUPABASE_URL`
 - `SUPABASE_SERVICE_ROLE_KEY`
 - `RESEND_API_KEY`
@@ -37,7 +37,7 @@ Optional:
 
 ## Checkout flow
 
-The site uses a browser cart and a Next.js route at `app/api/create-checkout-session/route.js` to create the Stripe Checkout session securely on the server.
+The site uses a browser cart, a server route at `app/api/create-embedded-checkout-session/route.js`, and an embedded Stripe Checkout page at `/checkout`.
 
 ## Launch discount flow
 

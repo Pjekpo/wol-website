@@ -4,28 +4,6 @@ import content from "../../../data/content.json";
 
 export const runtime = "nodejs";
 
-function buildOrigin(request) {
-  const headerOrigin = request.headers.get("origin");
-  if (headerOrigin) {
-    return headerOrigin;
-  }
-
-  const host = request.headers.get("host");
-  if (host) {
-    const protocol = host.includes("localhost") ? "http" : "https";
-    return `${protocol}://${host}`;
-  }
-
-  return new URL(request.url).origin;
-}
-
-function buildReturnUrl(origin, returnPath, checkoutState) {
-  const safeReturnPath = String(returnPath || "/").trim().startsWith("/") ? String(returnPath || "/").trim() : "/";
-  const url = new URL(safeReturnPath || "/", origin);
-  url.searchParams.set("checkout", checkoutState);
-  return url.toString();
-}
-
 export async function POST(request) {
   if (!process.env.STRIPE_SECRET_KEY) {
     return NextResponse.json(
@@ -45,8 +23,6 @@ export async function POST(request) {
   const quantity = Math.max(1, Math.min(10, Number(payload.quantity) || 1));
   const size = String(payload.size || "").trim().slice(0, 20);
   const slug = String(payload.slug || "product-001").trim().slice(0, 80);
-  const returnPath = String(payload.returnPath || "/").trim();
-  const origin = buildOrigin(request);
   const productName = String(content.product.name || "The WOL Collective Product").replace(/^Product\s*\d+:\s*/i, "");
   const productDescription = String(content.product.description || "").trim().slice(0, 500);
   const currency = String(content.product.currency || "GBP").trim().toLowerCase();
@@ -63,9 +39,10 @@ export async function POST(request) {
   try {
     const stripe = getStripe();
     const session = await stripe.checkout.sessions.create({
+      ui_mode: "embedded",
+      redirect_on_completion: "never",
+      payment_method_types: ["card"],
       mode: "payment",
-      success_url: buildReturnUrl(origin, returnPath, "success"),
-      cancel_url: buildReturnUrl(origin, returnPath, "cancel"),
       allow_promotion_codes: true,
       line_items: [
         {
@@ -86,13 +63,13 @@ export async function POST(request) {
       }
     });
 
-    if (!session.url) {
-      return NextResponse.json({ error: "Stripe checkout session creation failed." }, { status: 500 });
+    if (!session.client_secret) {
+      return NextResponse.json({ error: "Stripe embedded checkout session creation failed." }, { status: 500 });
     }
 
-    return NextResponse.json({ url: session.url });
+    return NextResponse.json({ clientSecret: session.client_secret });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Stripe checkout session creation failed.";
+    const message = error instanceof Error ? error.message : "Stripe embedded checkout session creation failed.";
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

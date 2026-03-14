@@ -114,31 +114,8 @@ export default function CartPage() {
     try {
       setCheckoutBusy(true);
       setCheckoutState("");
-      setCheckoutMessage("Redirecting to secure checkout...");
-
-      const response = await fetch("/api/create-checkout-session", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          quantity: cart.quantity,
-          size: cart.size,
-          slug: content.product.slug,
-          returnPath: "/cart"
-        })
-      });
-
-      const payload = await response.json();
-
-      if (!response.ok) {
-        setCheckoutState("error");
-        setCheckoutMessage(payload.error || "Unable to start checkout.");
-        setCheckoutBusy(false);
-        return;
-      }
-
-      window.location.assign(payload.url);
+      setCheckoutMessage("Opening secure checkout...");
+      router.push("/checkout");
     } catch {
       setCheckoutState("error");
       setCheckoutMessage("Checkout request failed. Check your deployment and Stripe configuration.");
@@ -202,9 +179,9 @@ export default function CartPage() {
                 <strong>{subtotal}</strong>
               </div>
               <button className="cart-page-checkout" type="button" onClick={handleCheckout} disabled={checkoutBusy || cart.quantity <= 0}>
-                {checkoutBusy ? "Redirecting..." : "Checkout"}
+                {checkoutBusy ? "Opening..." : "Checkout"}
               </button>
-              <p className="cart-page-note">Stripe Checkout accepts your discount code on the hosted payment page.</p>
+              <p className="cart-page-note">Your discount code can be entered inside the secure Stripe checkout page.</p>
             </aside>
           </div>
         )}
