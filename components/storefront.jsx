@@ -424,9 +424,13 @@ export default function Storefront({ content }) {
       );
       event.currentTarget.reset();
       return;
-    } catch {
+    } catch (error) {
       setWaitlistState("error");
-      setWaitlistMessage("We could not send your discount code right now. Please try again in a moment.");
+      setWaitlistMessage(
+        error instanceof Error && error.message
+          ? error.message
+          : "We could not send your discount code right now. Please try again in a moment."
+      );
     }
   }
 
@@ -468,9 +472,13 @@ export default function Storefront({ content }) {
       );
       setDiscountEmail("");
       return;
-    } catch {
+    } catch (error) {
       setDiscountClaimState("error");
-      setDiscountClaimMessage("We could not send your discount code right now. Please try again in a moment.");
+      setDiscountClaimMessage(
+        error instanceof Error && error.message
+          ? error.message
+          : "We could not send your discount code right now. Please try again in a moment."
+      );
     }
   }
 
